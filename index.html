@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 名片掃描 (LINE 適配版)</title>
+    <title>AI 名片管家</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .gradient-bg {
-            background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
         }
 
         /* --- 核心相機介面樣式 --- */
@@ -53,7 +53,7 @@
 
         .scan-laser {
             position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: #60a5fa; box-shadow: 0 0 10px #3b82f6; animation: scanning 2s linear infinite;
+            background: #06C755; box-shadow: 0 0 15px #06C755; animation: scanning 2s linear infinite;
         }
         @keyframes scanning { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
     </style>
@@ -63,13 +63,13 @@
     <!-- Header -->
     <header class="w-full max-w-md flex justify-between items-center mb-6 mt-2 text-white z-10">
         <div class="flex items-center gap-2">
-            <div class="bg-white/20 p-2 rounded-lg"><i data-lucide="scan-line" class="w-6 h-6 text-white"></i></div>
+            <div class="bg-[#06C755] p-1.5 rounded-lg shadow-lg"><i data-lucide="scan-face" class="w-6 h-6 text-white"></i></div>
             <div>
-                <h1 class="text-lg font-bold">AI 名片掃描</h1>
-                <p id="browserInfo" class="text-[10px] text-blue-100">v22.0</p>
+                <h1 class="text-lg font-bold">AI 名片管家</h1>
+                <p id="browserInfo" class="text-[10px] text-green-100">智慧辨識 • 自動存檔</p>
             </div>
         </div>
-        <button onclick="toggleSettings()" class="p-2 bg-white/10 hover:bg-white/20 rounded-full"><i data-lucide="settings" class="w-5 h-5"></i></button>
+        <!-- 移除設定按鈕，商業版不需要給用戶看 -->
     </header>
 
     <!-- Main Content -->
@@ -80,21 +80,15 @@
             <span id="statusIcon"></span><span id="statusText"></span>
         </div>
 
-        <!-- Settings -->
-        <div id="settingsPanel" class="hidden absolute top-0 left-0 w-full z-30 glass-panel rounded-2xl p-4 shadow-2xl animate-fade-in">
-            <h3 class="font-bold text-slate-700 mb-2">API 設定</h3>
-            <div class="space-y-3">
-                <div><label class="text-xs text-slate-500">Gemini API Key</label><input type="password" id="apiKeyInput" class="w-full mt-1 px-3 py-2 border rounded text-xs"></div>
-            </div>
-            <div class="flex justify-end mt-4"><button onclick="saveSettings()" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium">儲存</button></div>
-        </div>
-
         <!-- Start Screen -->
         <div id="startScreen" class="glass-panel rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center min-h-[400px] gap-6 animate-fade-in">
-            <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner"><i data-lucide="camera" class="w-10 h-10"></i></div>
-            <div class="text-center px-4"><h2 class="text-xl font-bold text-slate-800">準備掃描</h2></div>
-            <div class="w-full space-y-3">
-                <button onclick="attemptStartCamera()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform"><i data-lucide="aperture" class="w-5 h-5"></i>開啟相機</button>
+            <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner border-4 border-white"><i data-lucide="camera" class="w-10 h-10"></i></div>
+            <div class="text-center px-4 mt-2">
+                <h2 class="text-xl font-bold text-slate-800">開始掃描</h2>
+                <p class="text-sm text-slate-500 mt-1">請使用 Safari 開啟以獲得最佳體驗</p>
+            </div>
+            <div class="w-full space-y-3 mt-4">
+                <button onclick="attemptStartCamera()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform"><i data-lucide="aperture" class="w-5 h-5"></i>開啟相機</button>
                 <button onclick="triggerFileInput()" class="w-full bg-white hover:bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform border border-slate-200"><i data-lucide="image" class="w-5 h-5"></i>上傳圖片</button>
             </div>
             <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
@@ -119,16 +113,18 @@
         <div id="processingState" class="hidden flex-col items-center justify-center fixed inset-0 z-[100] bg-black/90 backdrop-blur-md">
             <div class="relative w-20 h-20 mb-4">
                 <div class="absolute inset-0 border-4 border-slate-500/30 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                <div class="absolute inset-0 border-4 border-[#06C755] rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <p class="text-white font-bold text-lg">AI 正在分析...</p>
+            <p class="text-white font-bold text-lg">AI 處理中...</p>
         </div>
 
         <!-- Result Card -->
         <div id="resultCard" class="glass-panel rounded-2xl p-0 shadow-xl hidden transition-all duration-500 overflow-hidden flex flex-col max-h-[85vh] w-full">
             <div class="bg-slate-50 border-b p-3 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-300 relative"><img id="contactPhotoPreview" class="w-full h-full object-cover"></div>
+                    <div class="w-16 h-10 bg-slate-200 overflow-hidden border border-slate-300 relative rounded shadow-sm">
+                         <img id="contactPhotoPreview" class="w-full h-full object-cover">
+                    </div>
                     <div><h3 class="text-sm font-bold text-slate-700">辨識結果</h3></div>
                 </div>
                 <button onclick="resetApp()" class="text-xs text-red-500 hover:text-red-600 px-2 py-1">重掃</button>
@@ -151,56 +147,61 @@
             </div>
         </div>
 
-        <!-- ★ LINE Error Modal ★ -->
+        <!-- ★ LINE Error Modal (iOS Only) ★ -->
         <div id="lineErrorModal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
             <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
                 <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
                 <div class="flex items-center gap-2 mb-4 text-amber-500">
-                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-                    <h3 class="text-lg font-bold text-slate-800">LINE 瀏覽器限制</h3>
+                    <i data-lucide="external-link" class="w-6 h-6"></i>
+                    <h3 class="text-lg font-bold text-slate-800">請開啟外部瀏覽器</h3>
                 </div>
-                <p class="text-sm text-slate-600 mb-4">LINE 內建瀏覽器無法直接下載聯絡人檔案。請依照指示操作：</p>
-                
+                <p class="text-sm text-slate-600 mb-4 font-medium">iOS 的 LINE 無法直接儲存聯絡人，請依照指示操作以獲得最佳體驗：</p>
                 <div class="bg-slate-100 p-4 rounded-xl space-y-3 text-sm text-slate-700">
-                    <div class="flex gap-3">
-                        <div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">1</div>
-                        <p>點擊右上角的 <span class="font-bold">「︙」</span> 或分享圖示</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">2</div>
-                        <p>選擇 <span class="font-bold text-blue-600">「使用預設瀏覽器開啟」</span> (Safari/Chrome)</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">3</div>
-                        <p>再次點擊「匯入」按鈕即可</p>
-                    </div>
+                    <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">1</div><p>點擊右上角的 <span class="font-bold">「︙」</span> 或分享圖示</p></div>
+                    <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">2</div><p>選擇 <span class="font-bold text-blue-600">「使用預設瀏覽器開啟」</span> (Safari)</p></div>
+                    <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">3</div><p>在 Safari 中點擊 <span class="font-bold">「匯入」</span>，即可自動開啟聯絡人App。</p></div>
                 </div>
-                <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="w-full mt-6 bg-slate-800 text-white py-3 rounded-xl font-bold">我了解了</button>
+                <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="w-full mt-6 bg-[#06C755] text-white py-3 rounded-xl font-bold">我了解了</button>
             </div>
         </div>
 
     </main>
 
     <script>
-        let AUTO_API_KEY = localStorage.getItem('gemini_api_key') || "";
+        // ★★★ 商業部署設定區 ★★★
+        // 請將您的 Key 和 URL 填入下方引號中
+        const AUTO_API_KEY = "AIzaSyCdVLSq3gcD1CnWnRHnsgNgk01JMSfh5XA"; // 填入您的 Gemini API Key (AIza...)
+        const GOOGLE_SCRIPT_URL = ""; // 填入您的 GAS 網址 (https://script.google.com/...)
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
+        
         let stream = null;
         let facingMode = "environment";
-        let currentThumbnailBase64 = null;
+        let currentHighResBase64 = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            document.getElementById('apiKeyInput').value = AUTO_API_KEY;
-            
-            // Detect Browser
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isLine = (ua.indexOf("Line") > -1);
-            document.getElementById('browserInfo').textContent = isLine ? "LINE 模式" : "瀏覽器模式";
-
-            if(!AUTO_API_KEY) toggleSettings();
+            document.getElementById('browserInfo').textContent = isLine ? "LINE Mode" : "Web Mode";
+            
+            // 檢查是否忘了填 Key
+            if(!AUTO_API_KEY) {
+                alert("系統未設定 API Key，請聯絡管理員");
+            }
         });
 
-        // --- Camera Logic (Same as v21.1) ---
+        // --- CRM Backup (Silent) ---
+        function backupToSheet(cardData) {
+            if (!GOOGLE_SCRIPT_URL) return;
+            // 簡單的備份，不影響前端效能
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors', cache: 'no-cache',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...cardData, timestamp: new Date().toISOString() })
+            }).catch(e => console.error(e));
+        }
+
+        // --- Camera Logic ---
         async function attemptStartCamera() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return showToast('error', '不支援相機');
             try {
@@ -231,25 +232,31 @@
         }
         function closeCamera() { stopCamera(); document.getElementById('startScreen').classList.remove('hidden'); }
         async function switchCamera() { stopCamera(); facingMode = facingMode === "environment" ? "user" : "environment"; await attemptStartCamera(); }
+        
         function takePhoto() {
             const video = document.getElementById('cameraFeed');
             const canvas = document.getElementById('cameraCanvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const fullBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
             
-            const tCanvas = document.createElement('canvas');
-            const size = Math.min(canvas.width, canvas.height);
-            tCanvas.width = 200; tCanvas.height = 200;
-            tCanvas.getContext('2d').drawImage(video, (canvas.width-size)/2, (canvas.height-size)/2, size, size, 0, 0, 200, 200);
-            currentThumbnailBase64 = tCanvas.toDataURL('image/jpeg', 0.6).split(',')[1];
-            document.getElementById('contactPhotoPreview').src = "data:image/jpeg;base64," + currentThumbnailBase64;
+            // High Res for VCF & AI
+            const maxDim = 1024;
+            let scale = 1;
+            if (canvas.width > maxDim || canvas.height > maxDim) { scale = maxDim / Math.max(canvas.width, canvas.height); }
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = canvas.width * scale; finalCanvas.height = canvas.height * scale;
+            finalCanvas.getContext('2d').drawImage(canvas, 0, 0, finalCanvas.width, finalCanvas.height);
+            
+            const finalBase64 = finalCanvas.toDataURL('image/jpeg', 0.7);
+            currentHighResBase64 = finalBase64.split(',')[1];
+            document.getElementById('contactPhotoPreview').src = finalBase64;
 
             closeCamera();
-            analyzeImage(fullBase64);
+            analyzeImage(currentHighResBase64);
         }
 
-        // --- Upload & AI (Same as v21.1) ---
+        // --- Upload & AI ---
         function triggerFileInput() { document.getElementById('fileInput').click(); }
         function handleFileSelect(e) {
             const file = e.target.files[0];
@@ -258,18 +265,21 @@
             reader.onload = (ev) => {
                 const img = new Image();
                 img.onload = () => {
+                    const maxDim = 1024;
+                    const scale = (img.width > maxDim || img.height > maxDim) ? (maxDim / Math.max(img.width, img.height)) : 1;
                     const c = document.createElement('canvas');
-                    c.width = img.width; c.height = img.height;
-                    c.getContext('2d').drawImage(img, 0, 0);
-                    const b64 = c.toDataURL('image/jpeg', 0.85).split(',')[1];
-                    currentThumbnailBase64 = b64; 
-                    document.getElementById('contactPhotoPreview').src = ev.target.result;
-                    analyzeImage(b64);
+                    c.width = img.width * scale; c.height = img.height * scale;
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    const b64 = c.toDataURL('image/jpeg', 0.7);
+                    currentHighResBase64 = b64.split(',')[1];
+                    document.getElementById('contactPhotoPreview').src = b64;
+                    analyzeImage(currentHighResBase64);
                 }
                 img.src = ev.target.result;
             };
             reader.readAsDataURL(file);
         }
+        
         async function analyzeImage(base64Data) {
             const loading = document.getElementById('processingState');
             loading.classList.remove('hidden'); loading.classList.add('flex');
@@ -283,69 +293,62 @@
                 text = text.replace(/```json/g, '').replace(/```/g, '').trim();
                 if(text.indexOf('{') > -1) text = text.substring(text.indexOf('{'), text.lastIndexOf('}')+1);
                 const card = JSON.parse(text);
+                
+                // Fill Form
                 document.getElementById('fieldName').value = card.name || '';
                 document.getElementById('fieldTitle').value = card.title || '';
                 document.getElementById('fieldCompany').value = card.company || '';
                 document.getElementById('fieldMobile').value = card.mobile || '';
                 document.getElementById('fieldEmail').value = card.email || '';
                 document.getElementById('fieldAddress').value = card.address || '';
+                
+                // Trigger Backup
+                backupToSheet(card);
+
                 loading.classList.add('hidden'); loading.classList.remove('flex');
                 document.getElementById('resultCard').classList.remove('hidden'); document.getElementById('startScreen').classList.add('hidden');
             } catch (error) { loading.classList.add('hidden'); loading.classList.remove('flex'); document.getElementById('startScreen').classList.remove('hidden'); showToast('error', '辨識失敗'); }
         }
 
-        // --- ★★★ 匯入邏輯 (LINE 特別版) ★★★ ---
+        // --- Export ---
         function exportContact() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
             const isLine = (ua.indexOf("Line") > -1);
 
-            // 如果是 LINE，先嘗試分享，如果不支援或失敗，則顯示教學
-            if (isLine) {
-                // 嘗試使用原生分享 (Web Share API)
-                const name = document.getElementById('fieldName').value || 'Contact';
-                const file = generateVCardFile(name);
-                
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    navigator.share({
-                        files: [file],
-                        title: '新增聯絡人'
-                    }).catch(() => {
-                        // 分享失敗 (或是使用者取消)，顯示教學
-                        document.getElementById('lineErrorModal').classList.remove('hidden');
-                    });
-                } else {
-                    // 不支援分享檔案，直接顯示教學
-                    document.getElementById('lineErrorModal').classList.remove('hidden');
-                }
-                return; // LINE 處理完畢，中止後續下載動作
+            if (isIOS && isLine) {
+                document.getElementById('lineErrorModal').classList.remove('hidden');
+                return; 
             }
 
-            // 如果是正常瀏覽器 (Safari/Chrome)，直接下載
             const name = document.getElementById('fieldName').value || 'Contact';
             const file = generateVCardFile(name);
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({ files: [file], title: '新增聯絡人' }).catch(() => forceDownload(file, name));
+            } else {
+                forceDownload(file, name);
+            }
+        }
+
+        function forceDownload(file, name) {
             const url = URL.createObjectURL(file);
             const a = document.createElement('a');
             a.style.display = 'none'; a.href = url; a.download = `${name}.vcf`;
             document.body.appendChild(a); a.click();
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-            showToast('success', '已下載，請開啟檔案');
+            showToast('success', '檔案已產生，請開啟以儲存');
         }
 
-        // 輔助：產生 VCF File 物件
         function generateVCardFile(name) {
             let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${document.getElementById('fieldMobile').value}\nEMAIL:${document.getElementById('fieldEmail').value}\nORG;CHARSET=UTF-8:${document.getElementById('fieldCompany').value}\nTITLE;CHARSET=UTF-8:${document.getElementById('fieldTitle').value}\nADR;TYPE=WORK;CHARSET=UTF-8:;;${document.getElementById('fieldAddress').value};;;;\n`;
-            if (currentThumbnailBase64) vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentThumbnailBase64}\n`;
+            if (currentHighResBase64) {
+                vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
+            }
             vcard += `END:VCARD`;
             return new File([new Blob([vcard], { type: 'text/vcard;charset=utf-8' })], `${name}.vcf`, { type: 'text/vcard' });
         }
 
-        // --- Utils ---
-        function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('hidden'); }
-        function saveSettings() {
-            AUTO_API_KEY = document.getElementById('apiKeyInput').value.trim();
-            localStorage.setItem('gemini_api_key', AUTO_API_KEY);
-            toggleSettings(); showToast('success', '設定已儲存');
-        }
         function resetApp() {
             document.getElementById('resultCard').classList.add('hidden');
             document.getElementById('startScreen').classList.remove('hidden');
