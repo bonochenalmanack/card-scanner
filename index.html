@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 名片掃描 (相機修復版)</title>
+    <title>AI 名片掃描 (完整版)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,13 +33,12 @@
             z-index: 9000;
             display: flex;
             flex-direction: column;
-            visibility: hidden; /* 預設隱藏，用 JS 切換 */
+            visibility: hidden;
         }
         #cameraInterface.active {
             visibility: visible;
         }
 
-        /* 影片層 - 確保填滿且在底層 */
         #cameraFeed {
             width: 100%;
             height: 100%;
@@ -49,11 +48,10 @@
             z-index: 1; 
         }
 
-        /* 導引框層 */
         .guide-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 10; /* 比影片高 */
+            z-index: 10;
             pointer-events: none;
             display: flex;
             align-items: center;
@@ -94,7 +92,7 @@
             </div>
             <div>
                 <h1 class="text-lg font-bold">AI 名片掃描</h1>
-                <p class="text-[10px] text-blue-100">v21.0 Camera Fix</p>
+                <p class="text-[10px] text-blue-100">v21.1 Complete</p>
             </div>
         </div>
         <button onclick="toggleSettings()" class="p-2 bg-white/10 hover:bg-white/20 rounded-full">
@@ -132,7 +130,6 @@
             </div>
             <div class="text-center px-4">
                 <h2 class="text-xl font-bold text-slate-800">準備掃描</h2>
-                <!-- Debug Info Display -->
                 <p id="envInfo" class="text-xs text-slate-400 mt-2 font-mono bg-slate-100 p-1 rounded">偵測環境...</p>
             </div>
             <div class="w-full space-y-3">
@@ -225,6 +222,14 @@
                     <input type="text" id="fieldAddress" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm">
                 </div>
             </form>
+            
+            <!-- ★★★ 新增：匯入按鈕區塊 ★★★ -->
+            <div class="p-4 bg-slate-50 border-t space-y-2">
+                <button onclick="exportContact()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                    匯入手機通訊錄
+                </button>
+            </div>
         </div>
 
     </main>
@@ -234,12 +239,12 @@
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
         let stream = null;
         let facingMode = "environment";
+        let currentThumbnailBase64 = null; // 全域變數：儲存縮圖供匯入使用
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             document.getElementById('apiKeyInput').value = AUTO_API_KEY;
             
-            // Debug Info
             const isSecure = window.isSecureContext;
             const protocol = location.protocol;
             document.getElementById('envInfo').textContent = `環境: ${protocol} | 安全: ${isSecure ? '是' : '否'}`;
@@ -247,9 +252,8 @@
             if(!AUTO_API_KEY) toggleSettings();
         });
 
-        // --- 強固型相機啟動邏輯 ---
+        // --- 相機邏輯 ---
         async function attemptStartCamera() {
-            // 1. 安全檢查
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showToast('error', '您的瀏覽器不支援相機 API');
                 return;
@@ -260,7 +264,6 @@
             }
 
             try {
-                // 2. 嘗試啟動 (優先嘗試高畫質)
                 console.log("Attempting camera start...");
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: facingMode, width: { ideal: 1920 } } 
@@ -269,7 +272,6 @@
             } catch (err) {
                 console.warn("High-res camera failed, trying fallback...", err);
                 try {
-                    // 3. 降級嘗試 (只求有畫面)
                     stream = await navigator.mediaDevices.getUserMedia({ 
                         video: { facingMode: facingMode } 
                     });
@@ -279,9 +281,7 @@
                     let msg = '無法啟動相機';
                     if (fatalErr.name === 'NotAllowedError') msg = '請允許相機存取權限';
                     if (fatalErr.name === 'NotFoundError') msg = '找不到相機裝置';
-                    
                     showToast('error', msg + '，已切換至上傳模式');
-                    // 自動切換到上傳
                     setTimeout(() => triggerFileInput(), 1500);
                 }
             }
@@ -293,7 +293,7 @@
             video.onloadedmetadata = () => {
                 video.play();
                 document.getElementById('startScreen').classList.add('hidden');
-                document.getElementById('cameraInterface').classList.add('active'); // 顯示介面
+                document.getElementById('cameraInterface').classList.add('active');
             };
         }
 
@@ -325,17 +325,23 @@
             
             const fullBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
 
-            // Thumbnail
+            // 製作縮圖並存入全域變數
             const tCanvas = document.createElement('canvas');
             tCanvas.width = 200; tCanvas.height = 200;
-            tCanvas.getContext('2d').drawImage(canvas, 0, 0, 200, 200);
-            document.getElementById('contactPhotoPreview').src = tCanvas.toDataURL('image/jpeg', 0.6);
+            // 裁切正方形縮圖
+            const size = Math.min(canvas.width, canvas.height);
+            tCanvas.getContext('2d').drawImage(video, (canvas.width-size)/2, (canvas.height-size)/2, size, size, 0, 0, 200, 200);
+            
+            // 這裡很重要：存起來給 VCF 用！
+            const thumbData = tCanvas.toDataURL('image/jpeg', 0.6);
+            currentThumbnailBase64 = thumbData.split(',')[1]; 
+            document.getElementById('contactPhotoPreview').src = thumbData;
 
             closeCamera();
             analyzeImage(fullBase64);
         }
 
-        // --- Standard Logic ---
+        // --- 上傳邏輯 ---
         function triggerFileInput() { document.getElementById('fileInput').click(); }
         function handleFileSelect(e) {
             const file = e.target.files[0];
@@ -348,6 +354,9 @@
                     c.width = img.width; c.height = img.height;
                     c.getContext('2d').drawImage(img, 0, 0);
                     const b64 = c.toDataURL('image/jpeg', 0.85).split(',')[1];
+                    
+                    // 上傳模式也產生縮圖
+                    currentThumbnailBase64 = b64; 
                     document.getElementById('contactPhotoPreview').src = ev.target.result;
                     analyzeImage(b64);
                 }
@@ -356,6 +365,7 @@
             reader.readAsDataURL(file);
         }
 
+        // --- AI 分析 ---
         async function analyzeImage(base64Data) {
             const loading = document.getElementById('processingState');
             loading.classList.remove('hidden');
@@ -398,6 +408,49 @@
             }
         }
 
+        // --- 匯入通訊錄功能 (VCF) ---
+        function exportContact() {
+            const name = document.getElementById('fieldName').value || 'New Contact';
+            const mobile = document.getElementById('fieldMobile').value;
+            const email = document.getElementById('fieldEmail').value;
+            const company = document.getElementById('fieldCompany').value;
+            const title = document.getElementById('fieldTitle').value;
+            const address = document.getElementById('fieldAddress').value;
+
+            let vcard = `BEGIN:VCARD
+VERSION:3.0
+FN;CHARSET=UTF-8:${name}
+N;CHARSET=UTF-8:${name};;;;
+ORG;CHARSET=UTF-8:${company}
+TITLE;CHARSET=UTF-8:${title}
+TEL;TYPE=CELL:${mobile}
+EMAIL;TYPE=WORK:${email}
+ADR;TYPE=WORK;CHARSET=UTF-8:;;${address};;;;`;
+
+            // 如果有縮圖，加入照片
+            if (currentThumbnailBase64) {
+                vcard += `\nPHOTO;ENCODING=b;TYPE=JPEG:${currentThumbnailBase64}`;
+            }
+            vcard += `\nEND:VCARD`;
+
+            const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `${name}.vcf`;
+            document.body.appendChild(a); 
+            a.click();
+            
+            setTimeout(() => { 
+                document.body.removeChild(a); 
+                URL.revokeObjectURL(url); 
+            }, 100);
+            
+            showToast('success', '已產生聯絡人檔案，請開啟以儲存');
+        }
+
+        // --- UI 工具 ---
         function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('hidden'); }
         function saveSettings() {
             AUTO_API_KEY = document.getElementById('apiKeyInput').value.trim();
