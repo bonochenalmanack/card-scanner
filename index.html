@@ -66,10 +66,9 @@
             <div class="bg-[#06C755] p-1.5 rounded-lg shadow-lg"><i data-lucide="scan-face" class="w-6 h-6 text-white"></i></div>
             <div>
                 <h1 class="text-lg font-bold">AI 名片管家</h1>
-                <p id="browserInfo" class="text-[10px] text-green-100">智慧辨識 • 自動存檔</p>
+                <p id="browserInfo" class="text-[10px] text-green-100">v25.0 Stable</p>
             </div>
         </div>
-        <!-- 移除設定按鈕，商業版不需要給用戶看 -->
     </header>
 
     <!-- Main Content -->
@@ -85,7 +84,7 @@
             <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner border-4 border-white"><i data-lucide="camera" class="w-10 h-10"></i></div>
             <div class="text-center px-4 mt-2">
                 <h2 class="text-xl font-bold text-slate-800">開始掃描</h2>
-                <p class="text-sm text-slate-500 mt-1">請使用 Safari 開啟以獲得最佳體驗</p>
+                <p class="text-sm text-slate-500 mt-1">請確保光線充足</p>
             </div>
             <div class="w-full space-y-3 mt-4">
                 <button onclick="attemptStartCamera()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform"><i data-lucide="aperture" class="w-5 h-5"></i>開啟相機</button>
@@ -115,7 +114,7 @@
                 <div class="absolute inset-0 border-4 border-slate-500/30 rounded-full"></div>
                 <div class="absolute inset-0 border-4 border-[#06C755] rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <p class="text-white font-bold text-lg">AI 處理中...</p>
+            <p class="text-white font-bold text-lg">AI 分析中...</p>
         </div>
 
         <!-- Result Card -->
@@ -147,7 +146,7 @@
             </div>
         </div>
 
-        <!-- ★ LINE Error Modal (iOS Only) ★ -->
+        <!-- LINE Error Modal -->
         <div id="lineErrorModal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
             <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
                 <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -155,7 +154,7 @@
                     <i data-lucide="external-link" class="w-6 h-6"></i>
                     <h3 class="text-lg font-bold text-slate-800">請開啟外部瀏覽器</h3>
                 </div>
-                <p class="text-sm text-slate-600 mb-4 font-medium">iOS 的 LINE 無法直接儲存聯絡人，請依照指示操作以獲得最佳體驗：</p>
+                <p class="text-sm text-slate-600 mb-4 font-medium">系統偵測到下載被阻擋，請依照指示操作：</p>
                 <div class="bg-slate-100 p-4 rounded-xl space-y-3 text-sm text-slate-700">
                     <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">1</div><p>點擊右上角的 <span class="font-bold">「︙」</span> 或分享圖示</p></div>
                     <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">2</div><p>選擇 <span class="font-bold text-blue-600">「使用預設瀏覽器開啟」</span> (Safari)</p></div>
@@ -169,9 +168,9 @@
 
     <script>
         // ★★★ 商業部署設定區 ★★★
-        // 請將您的 Key 和 URL 填入下方引號中
-        const AUTO_API_KEY = "AIzaSyCdVLSq3gcD1CnWnRHnsgNgk01JMSfh5XA"; // 填入您的 Gemini API Key (AIza...)
-        const GOOGLE_SCRIPT_URL = ""; // 填入您的 GAS 網址 (https://script.google.com/...)
+        // 請確認您的 Key 沒有多餘空白
+        const AUTO_API_KEY = ""; 
+        const GOOGLE_SCRIPT_URL = ""; 
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
         
         let stream = null;
@@ -184,16 +183,12 @@
             const isLine = (ua.indexOf("Line") > -1);
             document.getElementById('browserInfo').textContent = isLine ? "LINE Mode" : "Web Mode";
             
-            // 檢查是否忘了填 Key
-            if(!AUTO_API_KEY) {
-                alert("系統未設定 API Key，請聯絡管理員");
-            }
+            if(!AUTO_API_KEY) showToast('error', '未設定 API Key');
         });
 
-        // --- CRM Backup (Silent) ---
+        // --- CRM Backup ---
         function backupToSheet(cardData) {
             if (!GOOGLE_SCRIPT_URL) return;
-            // 簡單的備份，不影響前端效能
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST', mode: 'no-cors', cache: 'no-cache',
                 headers: { 'Content-Type': 'application/json' },
@@ -212,7 +207,7 @@
                     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode } });
                     onCameraSuccess(stream);
                 } catch (fatalErr) {
-                    showToast('error', '無法啟動相機，請改用上傳');
+                    showToast('error', '相機啟動失敗，請改用上傳');
                     setTimeout(() => triggerFileInput(), 1500);
                 }
             }
@@ -236,19 +231,17 @@
         function takePhoto() {
             const video = document.getElementById('cameraFeed');
             const canvas = document.getElementById('cameraCanvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            
+            // 修正：確保畫布尺寸正確
+            canvas.width = video.videoWidth; 
+            canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
             
-            // High Res for VCF & AI
-            const maxDim = 1024;
-            let scale = 1;
-            if (canvas.width > maxDim || canvas.height > maxDim) { scale = maxDim / Math.max(canvas.width, canvas.height); }
-            const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = canvas.width * scale; finalCanvas.height = canvas.height * scale;
-            finalCanvas.getContext('2d').drawImage(canvas, 0, 0, finalCanvas.width, finalCanvas.height);
+            // 安全的圖片處理 (不縮放，直接轉)
+            // 如果手機畫素太高，這裡可能會卡一下，但能保證畫質
+            const finalBase64 = canvas.toDataURL('image/jpeg', 0.8);
             
-            const finalBase64 = finalCanvas.toDataURL('image/jpeg', 0.7);
             currentHighResBase64 = finalBase64.split(',')[1];
             document.getElementById('contactPhotoPreview').src = finalBase64;
 
@@ -265,14 +258,12 @@
             reader.onload = (ev) => {
                 const img = new Image();
                 img.onload = () => {
-                    const maxDim = 1024;
-                    const scale = (img.width > maxDim || img.height > maxDim) ? (maxDim / Math.max(img.width, img.height)) : 1;
                     const c = document.createElement('canvas');
-                    c.width = img.width * scale; c.height = img.height * scale;
-                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-                    const b64 = c.toDataURL('image/jpeg', 0.7);
+                    c.width = img.width; c.height = img.height;
+                    c.getContext('2d').drawImage(img, 0, 0);
+                    const b64 = c.toDataURL('image/jpeg', 0.8);
                     currentHighResBase64 = b64.split(',')[1];
-                    document.getElementById('contactPhotoPreview').src = b64;
+                    document.getElementById('contactPhotoPreview').src = ev.target.result;
                     analyzeImage(currentHighResBase64);
                 }
                 img.src = ev.target.result;
@@ -281,17 +272,34 @@
         }
         
         async function analyzeImage(base64Data) {
+            if (!base64Data) {
+                showToast('error', '影像擷取失敗，請重試');
+                return;
+            }
+
             const loading = document.getElementById('processingState');
             loading.classList.remove('hidden'); loading.classList.add('flex');
+            
             try {
+                // 檢查 Key 是否填寫
+                if(!AUTO_API_KEY || AUTO_API_KEY.length < 10) throw new Error("API Key 未設定或無效");
+
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${AUTO_API_KEY}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "Extract business card: name, title, company, mobile, email, address. Return JSON." }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Extract business card: name, title, company, mobile, email, address. Return strictly JSON." }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
                 });
+                
+                if (!res.ok) {
+                    const errDetail = await res.text();
+                    console.error("API Error:", errDetail);
+                    throw new Error(`API 錯誤: ${res.status}`);
+                }
+
                 const data = await res.json();
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
                 text = text.replace(/```json/g, '').replace(/```/g, '').trim();
                 if(text.indexOf('{') > -1) text = text.substring(text.indexOf('{'), text.lastIndexOf('}')+1);
+                
                 const card = JSON.parse(text);
                 
                 // Fill Form
@@ -302,42 +310,56 @@
                 document.getElementById('fieldEmail').value = card.email || '';
                 document.getElementById('fieldAddress').value = card.address || '';
                 
-                // Trigger Backup
                 backupToSheet(card);
 
                 loading.classList.add('hidden'); loading.classList.remove('flex');
                 document.getElementById('resultCard').classList.remove('hidden'); document.getElementById('startScreen').classList.add('hidden');
-            } catch (error) { loading.classList.add('hidden'); loading.classList.remove('flex'); document.getElementById('startScreen').classList.remove('hidden'); showToast('error', '辨識失敗'); }
+            } catch (error) { 
+                console.error(error);
+                loading.classList.add('hidden'); loading.classList.remove('flex'); 
+                document.getElementById('startScreen').classList.remove('hidden'); 
+                showToast('error', '辨識失敗: ' + error.message); 
+            }
         }
 
-        // --- Export ---
+        // --- Export (iOS Fixed: No Share, Force Download) ---
         function exportContact() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-            const isLine = (ua.indexOf("Line") > -1);
-
-            if (isIOS && isLine) {
-                document.getElementById('lineErrorModal').classList.remove('hidden');
-                return; 
+            
+            // 1. iOS: 強制走下載，不嘗試 share (解決 Safari 跳出分享選單的問題)
+            if (isIOS) {
+                // 如果是 LINE 內的 iOS，還是要顯示教學，因為 LINE 擋下載
+                const isLine = (ua.indexOf("Line") > -1);
+                if (isLine) {
+                    document.getElementById('lineErrorModal').classList.remove('hidden');
+                    return;
+                }
+                // 如果是 Safari，直接下載
+                startDownload();
+                return;
             }
 
+            // 2. Android: 優先嘗試 Share，失敗則下載
             const name = document.getElementById('fieldName').value || 'Contact';
             const file = generateVCardFile(name);
             
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({ files: [file], title: '新增聯絡人' }).catch(() => forceDownload(file, name));
+                navigator.share({ files: [file], title: '新增聯絡人' }).catch(() => startDownload());
             } else {
-                forceDownload(file, name);
+                startDownload();
             }
         }
 
-        function forceDownload(file, name) {
+        function startDownload() {
+            const name = document.getElementById('fieldName').value || 'Contact';
+            const file = generateVCardFile(name);
             const url = URL.createObjectURL(file);
             const a = document.createElement('a');
             a.style.display = 'none'; a.href = url; a.download = `${name}.vcf`;
             document.body.appendChild(a); a.click();
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-            showToast('success', '檔案已產生，請開啟以儲存');
+            showToast('success', '已產生檔案，請點擊開啟');
         }
 
         function generateVCardFile(name) {
