@@ -4,88 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 名片管家</title>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-        }
-
-        /* --- 核心相機介面樣式 --- */
-        #cameraInterface {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: #000;
-            z-index: 9000;
-            display: flex;
-            flex-direction: column;
-            visibility: hidden;
-        }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); }
+        #cameraInterface { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 9000; display: flex; flex-direction: column; visibility: hidden; }
         #cameraInterface.active { visibility: visible; }
-
-        #cameraFeed {
-            width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; 
-        }
-
-        .guide-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; pointer-events: none;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .guide-box {
-            position: relative; width: 85%; aspect-ratio: 1.6/1; border-radius: 12px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); border: 2px solid rgba(255, 255, 255, 0.5);
-        }
-
-        .scan-laser {
-            position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: #06C755; box-shadow: 0 0 15px #06C755; animation: scanning 2s linear infinite;
-        }
+        #cameraFeed { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
+        .guide-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+        .guide-box { position: relative; width: 85%; aspect-ratio: 1.6/1; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); border: 2px solid rgba(255, 255, 255, 0.5); }
+        .scan-laser { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #06C755; box-shadow: 0 0 15px #06C755; animation: scanning 2s linear infinite; }
         @keyframes scanning { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-800 flex flex-col items-center p-4">
 
-    <!-- Header -->
     <header class="w-full max-w-md flex justify-between items-center mb-6 mt-2 text-white z-10">
         <div class="flex items-center gap-2">
             <div class="bg-[#06C755] p-1.5 rounded-lg shadow-lg"><i data-lucide="scan-face" class="w-6 h-6 text-white"></i></div>
-            <div>
-                <h1 class="text-lg font-bold">AI 名片管家</h1>
-                <p id="browserInfo" class="text-[10px] text-green-100">v25.0 Stable</p>
-            </div>
+            <div><h1 class="text-lg font-bold">AI 名片管家</h1><p id="browserInfo" class="text-[10px] text-green-100">v25.2</p></div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="w-full max-w-md relative z-0 flex-1 flex flex-col w-full">
-
         <!-- Toast -->
-        <div id="statusToast" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md">
-            <span id="statusIcon"></span><span id="statusText"></span>
-        </div>
+        <div id="statusToast" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md"><span id="statusIcon"></span><span id="statusText"></span></div>
 
         <!-- Start Screen -->
         <div id="startScreen" class="glass-panel rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center min-h-[400px] gap-6 animate-fade-in">
             <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner border-4 border-white"><i data-lucide="camera" class="w-10 h-10"></i></div>
-            <div class="text-center px-4 mt-2">
-                <h2 class="text-xl font-bold text-slate-800">開始掃描</h2>
-                <p class="text-sm text-slate-500 mt-1">請確保光線充足</p>
-            </div>
+            <div class="text-center px-4 mt-2"><h2 class="text-xl font-bold text-slate-800">開始掃描</h2><p class="text-sm text-slate-500 mt-1">請確保光線充足</p></div>
             <div class="w-full space-y-3 mt-4">
                 <button onclick="attemptStartCamera()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform"><i data-lucide="aperture" class="w-5 h-5"></i>開啟相機</button>
                 <button onclick="triggerFileInput()" class="w-full bg-white hover:bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform border border-slate-200"><i data-lucide="image" class="w-5 h-5"></i>上傳圖片</button>
@@ -121,9 +72,7 @@
         <div id="resultCard" class="glass-panel rounded-2xl p-0 shadow-xl hidden transition-all duration-500 overflow-hidden flex flex-col max-h-[85vh] w-full">
             <div class="bg-slate-50 border-b p-3 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <div class="w-16 h-10 bg-slate-200 overflow-hidden border border-slate-300 relative rounded shadow-sm">
-                         <img id="contactPhotoPreview" class="w-full h-full object-cover">
-                    </div>
+                    <div class="w-16 h-10 bg-slate-200 overflow-hidden border border-slate-300 relative rounded shadow-sm"><img id="contactPhotoPreview" class="w-full h-full object-cover"></div>
                     <div><h3 class="text-sm font-bold text-slate-700">辨識結果</h3></div>
                 </div>
                 <button onclick="resetApp()" class="text-xs text-red-500 hover:text-red-600 px-2 py-1">重掃</button>
@@ -150,11 +99,8 @@
         <div id="lineErrorModal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
             <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
                 <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
-                <div class="flex items-center gap-2 mb-4 text-amber-500">
-                    <i data-lucide="external-link" class="w-6 h-6"></i>
-                    <h3 class="text-lg font-bold text-slate-800">請開啟外部瀏覽器</h3>
-                </div>
-                <p class="text-sm text-slate-600 mb-4 font-medium">系統偵測到下載被阻擋，請依照指示操作：</p>
+                <div class="flex items-center gap-2 mb-4 text-amber-500"><i data-lucide="external-link" class="w-6 h-6"></i><h3 class="text-lg font-bold text-slate-800">請開啟外部瀏覽器</h3></div>
+                <p class="text-sm text-slate-600 mb-4 font-medium">iOS 的 LINE 無法直接儲存聯絡人，請依照指示操作：</p>
                 <div class="bg-slate-100 p-4 rounded-xl space-y-3 text-sm text-slate-700">
                     <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">1</div><p>點擊右上角的 <span class="font-bold">「︙」</span> 或分享圖示</p></div>
                     <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">2</div><p>選擇 <span class="font-bold text-blue-600">「使用預設瀏覽器開啟」</span> (Safari)</p></div>
@@ -163,12 +109,10 @@
                 <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="w-full mt-6 bg-[#06C755] text-white py-3 rounded-xl font-bold">我了解了</button>
             </div>
         </div>
-
     </main>
 
     <script>
         // ★★★ 商業部署設定區 ★★★
-        // 請確認您的 Key 沒有多餘空白
         const AUTO_API_KEY = "AIzaSyCdVLSq3gcD1CnWnRHnsgNgk01JMSfh5XA"; 
         const GOOGLE_SCRIPT_URL = ""; 
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
@@ -182,19 +126,8 @@
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isLine = (ua.indexOf("Line") > -1);
             document.getElementById('browserInfo').textContent = isLine ? "LINE Mode" : "Web Mode";
-            
-            if(!AUTO_API_KEY) showToast('error', '未設定 API Key');
+            if(!AUTO_API_KEY) alert("嚴重錯誤：API Key 未設定");
         });
-
-        // --- CRM Backup ---
-        function backupToSheet(cardData) {
-            if (!GOOGLE_SCRIPT_URL) return;
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST', mode: 'no-cors', cache: 'no-cache',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...cardData, timestamp: new Date().toISOString() })
-            }).catch(e => console.error(e));
-        }
 
         // --- Camera Logic ---
         async function attemptStartCamera() {
@@ -231,17 +164,11 @@
         function takePhoto() {
             const video = document.getElementById('cameraFeed');
             const canvas = document.getElementById('cameraCanvas');
-            
-            // 修正：確保畫布尺寸正確
-            canvas.width = video.videoWidth; 
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
             
-            // 安全的圖片處理 (不縮放，直接轉)
-            // 如果手機畫素太高，這裡可能會卡一下，但能保證畫質
             const finalBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            
             currentHighResBase64 = finalBase64.split(',')[1];
             document.getElementById('contactPhotoPreview').src = finalBase64;
 
@@ -259,11 +186,14 @@
                 const img = new Image();
                 img.onload = () => {
                     const c = document.createElement('canvas');
-                    c.width = img.width; c.height = img.height;
-                    c.getContext('2d').drawImage(img, 0, 0);
+                    const maxDim = 1500;
+                    const scale = (img.width > maxDim || img.height > maxDim) ? (maxDim / Math.max(img.width, img.height)) : 1;
+                    c.width = img.width * scale; c.height = img.height * scale;
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    
                     const b64 = c.toDataURL('image/jpeg', 0.8);
                     currentHighResBase64 = b64.split(',')[1];
-                    document.getElementById('contactPhotoPreview').src = ev.target.result;
+                    document.getElementById('contactPhotoPreview').src = b64;
                     analyzeImage(currentHighResBase64);
                 }
                 img.src = ev.target.result;
@@ -272,37 +202,27 @@
         }
         
         async function analyzeImage(base64Data) {
-            if (!base64Data) {
-                showToast('error', '影像擷取失敗，請重試');
-                return;
-            }
-
+            if (!base64Data) { return showToast('error', '影像擷取失敗'); }
             const loading = document.getElementById('processingState');
             loading.classList.remove('hidden'); loading.classList.add('flex');
             
             try {
-                // 檢查 Key 是否填寫
-                if(!AUTO_API_KEY || AUTO_API_KEY.length < 10) throw new Error("API Key 未設定或無效");
-
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${AUTO_API_KEY}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: "Extract business card: name, title, company, mobile, email, address. Return strictly JSON." }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
                 });
                 
                 if (!res.ok) {
-                    const errDetail = await res.text();
-                    console.error("API Error:", errDetail);
-                    throw new Error(`API 錯誤: ${res.status}`);
+                    if (res.status === 403) alert("API 403 錯誤：請檢查金鑰網域限制");
+                    throw new Error(`API Error ${res.status}`);
                 }
 
                 const data = await res.json();
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
                 text = text.replace(/```json/g, '').replace(/```/g, '').trim();
                 if(text.indexOf('{') > -1) text = text.substring(text.indexOf('{'), text.lastIndexOf('}')+1);
-                
                 const card = JSON.parse(text);
                 
-                // Fill Form
                 document.getElementById('fieldName').value = card.name || '';
                 document.getElementById('fieldTitle').value = card.title || '';
                 document.getElementById('fieldCompany').value = card.company || '';
@@ -310,7 +230,9 @@
                 document.getElementById('fieldEmail').value = card.email || '';
                 document.getElementById('fieldAddress').value = card.address || '';
                 
-                backupToSheet(card);
+                if (GOOGLE_SCRIPT_URL) {
+                    fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...card, timestamp: new Date().toISOString() }) }).catch(e => console.error(e));
+                }
 
                 loading.classList.add('hidden'); loading.classList.remove('flex');
                 document.getElementById('resultCard').classList.remove('hidden'); document.getElementById('startScreen').classList.add('hidden');
@@ -318,7 +240,6 @@
                 console.error(error);
                 loading.classList.add('hidden'); loading.classList.remove('flex'); 
                 document.getElementById('startScreen').classList.remove('hidden'); 
-                showToast('error', '辨識失敗: ' + error.message); 
             }
         }
 
@@ -327,20 +248,16 @@
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
             
-            // 1. iOS: 強制走下載，不嘗試 share (解決 Safari 跳出分享選單的問題)
             if (isIOS) {
-                // 如果是 LINE 內的 iOS，還是要顯示教學，因為 LINE 擋下載
                 const isLine = (ua.indexOf("Line") > -1);
                 if (isLine) {
                     document.getElementById('lineErrorModal').classList.remove('hidden');
                     return;
                 }
-                // 如果是 Safari，直接下載
                 startDownload();
                 return;
             }
 
-            // 2. Android: 優先嘗試 Share，失敗則下載
             const name = document.getElementById('fieldName').value || 'Contact';
             const file = generateVCardFile(name);
             
@@ -359,11 +276,13 @@
             a.style.display = 'none'; a.href = url; a.download = `${name}.vcf`;
             document.body.appendChild(a); a.click();
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-            showToast('success', '已產生檔案，請點擊開啟');
+            showToast('success', '檔案已產生，請點擊開啟');
         }
 
+        // --- ★ VCard Generation (Fix Name Field) ★ ---
         function generateVCardFile(name) {
-            let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${document.getElementById('fieldMobile').value}\nEMAIL:${document.getElementById('fieldEmail').value}\nORG;CHARSET=UTF-8:${document.getElementById('fieldCompany').value}\nTITLE;CHARSET=UTF-8:${document.getElementById('fieldTitle').value}\nADR;TYPE=WORK;CHARSET=UTF-8:;;${document.getElementById('fieldAddress').value};;;;\n`;
+            // N 欄位是關鍵：名字;;;;
+            let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${document.getElementById('fieldMobile').value}\nEMAIL:${document.getElementById('fieldEmail').value}\nORG;CHARSET=UTF-8:${document.getElementById('fieldCompany').value}\nTITLE;CHARSET=UTF-8:${document.getElementById('fieldTitle').value}\nADR;TYPE=WORK;CHARSET=UTF-8:;;${document.getElementById('fieldAddress').value};;;;\n`;
             if (currentHighResBase64) {
                 vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
             }
@@ -389,4 +308,3 @@
     </script>
 </body>
 </html>
-
