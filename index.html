@@ -25,7 +25,7 @@
     <header class="w-full max-w-md flex justify-between items-center mb-6 mt-2 text-white z-10">
         <div class="flex items-center gap-2">
             <div class="bg-[#06C755] p-1.5 rounded-lg shadow-lg"><i data-lucide="scan-face" class="w-6 h-6 text-white"></i></div>
-            <div><h1 class="text-lg font-bold">AI 名片管家</h1><p id="browserInfo" class="text-[10px] text-green-100">v25.2</p></div>
+            <div><h1 class="text-lg font-bold">AI 名片管家</h1><p id="browserInfo" class="text-[10px] text-green-100">v28.0</p></div>
         </div>
     </header>
 
@@ -36,8 +36,18 @@
         <!-- Start Screen -->
         <div id="startScreen" class="glass-panel rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center min-h-[400px] gap-6 animate-fade-in">
             <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner border-4 border-white"><i data-lucide="camera" class="w-10 h-10"></i></div>
-            <div class="text-center px-4 mt-2"><h2 class="text-xl font-bold text-slate-800">開始掃描</h2><p class="text-sm text-slate-500 mt-1">請確保光線充足</p></div>
+            <div class="text-center px-4 mt-2">
+                <h2 class="text-xl font-bold text-slate-800">開始掃描</h2>
+                <p class="text-sm text-slate-500 mt-1">智慧辨識 • 一鍵存檔</p>
+            </div>
+            
             <div class="w-full space-y-3 mt-4">
+                <!-- ★ iOS 專用跳轉按鈕 (Android 會自動隱藏) ★ -->
+                <a id="openInBrowserBtn" href="#" target="_blank" class="hidden w-full bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                    <i data-lucide="compass" class="w-5 h-5"></i>
+                    用 Safari 開啟 (iOS 推薦)
+                </a>
+
                 <button onclick="attemptStartCamera()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform"><i data-lucide="aperture" class="w-5 h-5"></i>開啟相機</button>
                 <button onclick="triggerFileInput()" class="w-full bg-white hover:bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform border border-slate-200"><i data-lucide="image" class="w-5 h-5"></i>上傳圖片</button>
             </div>
@@ -95,24 +105,18 @@
             </div>
         </div>
 
-        <!-- LINE Error Modal -->
+        <!-- LINE Error Modal (Only for iOS users who persist) -->
         <div id="lineErrorModal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
             <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
                 <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
-                <div class="flex items-center gap-2 mb-4 text-amber-500"><i data-lucide="external-link" class="w-6 h-6"></i><h3 class="text-lg font-bold text-slate-800">請開啟外部瀏覽器</h3></div>
-                <p class="text-sm text-slate-600 mb-4 font-medium">iOS 的 LINE 無法直接儲存聯絡人，請依照指示操作：</p>
-                <div class="bg-slate-100 p-4 rounded-xl space-y-3 text-sm text-slate-700">
-                    <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">1</div><p>點擊右上角的 <span class="font-bold">「︙」</span> 或分享圖示</p></div>
-                    <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">2</div><p>選擇 <span class="font-bold text-blue-600">「使用預設瀏覽器開啟」</span> (Safari)</p></div>
-                    <div class="flex gap-3 items-start"><div class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs">3</div><p>在 Safari 中點擊 <span class="font-bold">「匯入」</span>，即可自動開啟聯絡人App。</p></div>
-                </div>
+                <div class="flex items-center gap-2 mb-4 text-amber-500"><i data-lucide="external-link" class="w-6 h-6"></i><h3 class="text-lg font-bold text-slate-800">iOS 下載限制</h3></div>
+                <p class="text-sm text-slate-600 mb-4 font-medium">請點擊首頁上方的「用 Safari 開啟」按鈕，才能將名片存入 iPhone 通訊錄。</p>
                 <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="w-full mt-6 bg-[#06C755] text-white py-3 rounded-xl font-bold">我了解了</button>
             </div>
         </div>
     </main>
 
     <script>
-        // ★★★ 商業部署設定區 ★★★
         const AUTO_API_KEY = "AIzaSyCdVLSq3gcD1CnWnRHnsgNgk01JMSfh5XA"; 
         const GOOGLE_SCRIPT_URL = ""; 
         const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
@@ -125,7 +129,27 @@
             lucide.createIcons();
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isLine = (ua.indexOf("Line") > -1);
-            document.getElementById('browserInfo').textContent = isLine ? "LINE Mode" : "Web Mode";
+            const isAndroid = /Android/i.test(ua);
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            
+            // --- ★ 智慧分流邏輯 ★ ---
+            if (isLine) {
+                document.getElementById('browserInfo').textContent = isAndroid ? "Android LINE" : "iOS LINE";
+                
+                // 只有 iOS 且在 LINE 裡面，才顯示「用 Safari 開啟」
+                // Android 保持乾淨，因為 Android LINE 可以直接處理下載
+                if (isIOS) {
+                    const btn = document.getElementById('openInBrowserBtn');
+                    btn.classList.remove('hidden');
+                    btn.classList.add('flex');
+                    
+                    const currentUrl = location.href;
+                    btn.href = `${currentUrl}${currentUrl.includes('?') ? '&' : '?'}openExternalBrowser=1`;
+                }
+            } else {
+                document.getElementById('browserInfo').textContent = "Web Mode";
+            }
+            
             if(!AUTO_API_KEY) alert("嚴重錯誤：API Key 未設定");
         });
 
@@ -243,24 +267,23 @@
             }
         }
 
-        // --- Export (iOS Fixed: No Share, Force Download) ---
+        // --- Export (Smart Hybrid: Android Direct / iOS Jump) ---
         function exportContact() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            const isLine = (ua.indexOf("Line") > -1);
             
-            if (isIOS) {
-                const isLine = (ua.indexOf("Line") > -1);
-                if (isLine) {
-                    document.getElementById('lineErrorModal').classList.remove('hidden');
-                    return;
-                }
-                startDownload();
+            // 1. iOS + LINE: 無法下載，顯示 Modal 引導跳轉
+            if (isIOS && isLine) {
+                document.getElementById('lineErrorModal').classList.remove('hidden');
                 return;
             }
 
+            // 2. Android 或 一般瀏覽器: 正常執行
             const name = document.getElementById('fieldName').value || 'Contact';
             const file = generateVCardFile(name);
             
+            // Android 優先嘗試 Share (體驗最好)
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 navigator.share({ files: [file], title: '新增聯絡人' }).catch(() => startDownload());
             } else {
@@ -279,9 +302,7 @@
             showToast('success', '檔案已產生，請點擊開啟');
         }
 
-        // --- ★ VCard Generation (Fix Name Field) ★ ---
         function generateVCardFile(name) {
-            // N 欄位是關鍵：名字;;;;
             let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${document.getElementById('fieldMobile').value}\nEMAIL:${document.getElementById('fieldEmail').value}\nORG;CHARSET=UTF-8:${document.getElementById('fieldCompany').value}\nTITLE;CHARSET=UTF-8:${document.getElementById('fieldTitle').value}\nADR;TYPE=WORK;CHARSET=UTF-8:;;${document.getElementById('fieldAddress').value};;;;\n`;
             if (currentHighResBase64) {
                 vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
