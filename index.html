@@ -355,18 +355,10 @@
     </main>
 
     <script>
-      // ==========================================
-      // ★ 請替換以下這塊設定區域 ★
-      // ==========================================
-
-      // 1. 填入你剛剛申請的全新 API Key
       const AUTO_API_KEY = "AIzaSyAKVVORv0FMjOGAHZbEtMpmLoOtxMcOgnk";
-
-      // 2. 改用這個模型 (速度快且支援度較新)
+      const GOOGLE_SCRIPT_URL = "";
       const MODEL_NAME = "gemini-2.5-flash";
 
-      // (保留原本的變數)
-      const GOOGLE_SCRIPT_URL = "";
       let stream = null;
       let facingMode = "environment";
       let currentHighResBase64 = null;
@@ -404,119 +396,24 @@
       });
 
       // --- Camera Logic ---
-      async function analyzeImage(base64Data) {
-        if (!base64Data) {
-          return showToast("error", "影像擷取失敗");
-        }
-
-        const loading = document.getElementById("processingState");
-        loading.classList.remove("hidden");
-        loading.classList.add("flex");
-
+      async function attemptStartCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+          return showToast("error", "不支援相機");
         try {
-          // 建構請求 URL
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${AUTO_API_KEY}`;
-
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    // 提示詞優化：明確要求不要 Markdown，只要純 JSON
-                    {
-                      text: "Extract business card info into strict JSON: name, title, company, mobile, email, address. Return ONLY the JSON object. Do not use Markdown formatting.",
-                    },
-                    {
-                      inlineData: { mimeType: "image/jpeg", data: base64Data },
-                    },
-                  ],
-                },
-              ],
-            }),
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facingMode, width: { ideal: 1920 } },
           });
-
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.error("API Error Details:", errData);
-
-            if (res.status === 403) {
-              alert(
-                "⛔ 權限錯誤 (403)：\n1. 請檢查 API Key 是否正確\n2. 請確認 Google Cloud Console 已啟用 'Generative Language API'\n3. 如果是新 Key，請等待 1-2 分鐘生效"
-              );
-            } else if (res.status === 404) {
-              alert(
-                `⛔ 模型錯誤 (404)：\n模型 ${MODEL_NAME} 可能暫時無法使用。\n請回到程式碼將 MODEL_NAME 改為 'gemini-2.0-flash-001' 試試看。`
-              );
-            } else {
-              alert(`API 錯誤 (${res.status})：請查看 Console 了解詳情`);
-            }
-            throw new Error(`API Error ${res.status}`);
+          onCameraSuccess(stream);
+        } catch (err) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: facingMode },
+            });
+            onCameraSuccess(stream);
+          } catch (fatalErr) {
+            showToast("error", "相機啟動失敗，請改用上傳");
+            setTimeout(() => triggerFileInput(), 1500);
           }
-
-          const data = await res.json();
-
-          // --- ★ 新版：更強的 JSON 解析邏輯 ★ ---
-          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-          console.log("AI 原始回應:", text); // 方便你在 F12 Console 除錯
-
-          // 1. 暴力移除 Markdown 標記 (```json, ```)
-          text = text
-            .replace(/```\w*\n?/g, "")
-            .replace(/```/g, "")
-            .trim();
-
-          // 2. 精準抓取第一個 { 到最後一個 }
-          const firstBrace = text.indexOf("{");
-          const lastBrace = text.lastIndexOf("}");
-
-          if (firstBrace !== -1 && lastBrace !== -1) {
-            text = text.substring(firstBrace, lastBrace + 1);
-          }
-
-          // 3. 解析 JSON
-          const card = JSON.parse(text);
-
-          // --- 資料填入欄位 ---
-          document.getElementById("fieldName").value = card.name || "";
-          document.getElementById("fieldTitle").value = card.title || "";
-          document.getElementById("fieldCompany").value = card.company || "";
-          document.getElementById("fieldMobile").value = card.mobile || "";
-          document.getElementById("fieldEmail").value = card.email || "";
-          document.getElementById("fieldAddress").value = card.address || "";
-
-          // (選擇性) Google Sheet 串接
-          if (typeof GOOGLE_SCRIPT_URL !== "undefined" && GOOGLE_SCRIPT_URL) {
-            fetch(GOOGLE_SCRIPT_URL, {
-              method: "POST",
-              mode: "no-cors",
-              cache: "no-cache",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                ...card,
-                timestamp: new Date().toISOString(),
-              }),
-            }).catch((e) => console.error(e));
-          }
-
-          // 成功：隱藏 Loading，顯示結果
-          loading.classList.add("hidden");
-          loading.classList.remove("flex");
-          document.getElementById("resultCard").classList.remove("hidden");
-          document.getElementById("startScreen").classList.add("hidden");
-        } catch (error) {
-          console.error(error);
-          loading.classList.add("hidden");
-          loading.classList.remove("flex");
-          // 只有在非 403 的情況下才把畫面切回去，方便使用者看到 Alert 訊息
-          if (
-            !error.message.includes("403") &&
-            !error.message.includes("404")
-          ) {
-            document.getElementById("startScreen").classList.remove("hidden");
-          }
-          showToast("error", "辨識失敗，請查看錯誤訊息");
         }
       }
       function onCameraSuccess(stream) {
@@ -769,4 +666,3 @@
     </script>
   </body>
 </html>
-
