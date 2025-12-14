@@ -1,333 +1,771 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>AI 名片管家</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); }
-        #cameraInterface { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 9000; display: flex; flex-direction: column; visibility: hidden; }
-        #cameraInterface.active { visibility: visible; }
-        #cameraFeed { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
-        .guide-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; pointer-events: none; display: flex; align-items: center; justify-content: center; }
-        .guide-box { position: relative; width: 85%; aspect-ratio: 1.6/1; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); border: 2px solid rgba(255, 255, 255, 0.5); }
-        .scan-laser { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #06C755; box-shadow: 0 0 15px #06C755; animation: scanning 2s linear infinite; }
-        @keyframes scanning { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+      }
+      #cameraInterface {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #000;
+        z-index: 9000;
+        display: flex;
+        flex-direction: column;
+        visibility: hidden;
+      }
+      #cameraInterface.active {
+        visibility: visible;
+      }
+      #cameraFeed {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
+      .guide-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .guide-box {
+        position: relative;
+        width: 85%;
+        aspect-ratio: 1.6/1;
+        border-radius: 12px;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+      }
+      .scan-laser {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #06c755;
+        box-shadow: 0 0 15px #06c755;
+        animation: scanning 2s linear infinite;
+      }
+      @keyframes scanning {
+        0% {
+          top: 0%;
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          top: 100%;
+          opacity: 0;
+        }
+      }
     </style>
-</head>
-<body class="gradient-bg min-h-screen text-slate-800 flex flex-col items-center p-4">
-
-    <header class="w-full max-w-md flex justify-between items-center mb-6 mt-2 text-white z-10">
-        <div class="flex items-center gap-2">
-            <div class="bg-[#06C755] p-1.5 rounded-lg shadow-lg"><i data-lucide="scan-face" class="w-6 h-6 text-white"></i></div>
-            <div><h1 class="text-lg font-bold">AI 名片管家</h1><p id="browserInfo" class="text-[10px] text-green-100">v28.0</p></div>
+  </head>
+  <body
+    class="gradient-bg min-h-screen text-slate-800 flex flex-col items-center p-4"
+  >
+    <header
+      class="w-full max-w-md flex justify-between items-center mb-6 mt-2 text-white z-10"
+    >
+      <div class="flex items-center gap-2">
+        <div class="bg-[#06C755] p-1.5 rounded-lg shadow-lg">
+          <i data-lucide="scan-face" class="w-6 h-6 text-white"></i>
         </div>
+        <div>
+          <h1 class="text-lg font-bold">AI 名片管家</h1>
+          <p id="browserInfo" class="text-[10px] text-green-100">v28.0</p>
+        </div>
+      </div>
     </header>
 
     <main class="w-full max-w-md relative z-0 flex-1 flex flex-col w-full">
-        <!-- Toast -->
-        <div id="statusToast" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md"><span id="statusIcon"></span><span id="statusText"></span></div>
+      <!-- Toast -->
+      <div
+        id="statusToast"
+        class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md"
+      >
+        <span id="statusIcon"></span><span id="statusText"></span>
+      </div>
 
-        <!-- Start Screen -->
-        <div id="startScreen" class="glass-panel rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center min-h-[400px] gap-6 animate-fade-in">
-            <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner border-4 border-white"><i data-lucide="camera" class="w-10 h-10"></i></div>
-            <div class="text-center px-4 mt-2">
-                <h2 class="text-xl font-bold text-slate-800">開始掃描</h2>
-                <p class="text-sm text-slate-500 mt-1">智慧辨識 • 一鍵存檔</p>
-            </div>
-            
-            <div class="w-full space-y-3 mt-4">
-                <!-- ★ iOS 專用跳轉按鈕 (Android 會自動隱藏) ★ -->
-                <a id="openInBrowserBtn" href="#" target="_blank" class="hidden w-full bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                    <i data-lucide="compass" class="w-5 h-5"></i>
-                    用 Safari 開啟 (iOS 推薦)
-                </a>
-
-                <button onclick="attemptStartCamera()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform"><i data-lucide="aperture" class="w-5 h-5"></i>開啟相機</button>
-                <button onclick="triggerFileInput()" class="w-full bg-white hover:bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform border border-slate-200"><i data-lucide="image" class="w-5 h-5"></i>上傳圖片</button>
-            </div>
-            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+      <!-- Start Screen -->
+      <div
+        id="startScreen"
+        class="glass-panel rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center min-h-[400px] gap-6 animate-fade-in"
+      >
+        <div
+          class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner border-4 border-white"
+        >
+          <i data-lucide="camera" class="w-10 h-10"></i>
+        </div>
+        <div class="text-center px-4 mt-2">
+          <h2 class="text-xl font-bold text-slate-800">開始掃描</h2>
+          <p class="text-sm text-slate-500 mt-1">智慧辨識 • 一鍵存檔</p>
         </div>
 
-        <!-- Camera Interface -->
-        <div id="cameraInterface">
-            <div class="absolute top-0 left-0 right-0 z-[100] p-4 flex justify-between items-center text-white bg-gradient-to-b from-black/60 to-transparent">
-                <button onclick="closeCamera()" class="p-2 bg-white/10 rounded-full backdrop-blur-md"><i data-lucide="x" class="w-6 h-6"></i></button>
-                <span class="text-sm font-medium tracking-wider shadow-sm">將名片放入框內</span>
-                <button onclick="switchCamera()" class="p-2 bg-white/10 rounded-full backdrop-blur-md"><i data-lucide="refresh-ccw" class="w-6 h-6"></i></button>
-            </div>
-            <video id="cameraFeed" autoplay playsinline muted></video>
-            <canvas id="cameraCanvas" class="hidden"></canvas>
-            <div class="guide-overlay"><div class="guide-box"><div class="scan-laser"></div></div></div>
-            <div class="absolute bottom-0 left-0 right-0 h-32 bg-black/50 backdrop-blur-sm flex flex-col justify-center items-center pb-6 z-[100]">
-                <button onclick="takePhoto()" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform bg-white/20"><div class="w-16 h-16 bg-white rounded-full"></div></button>
-            </div>
-        </div>
+        <div class="w-full space-y-3 mt-4">
+          <!-- ★ iOS 專用跳轉按鈕 (Android 會自動隱藏) ★ -->
+          <a
+            id="openInBrowserBtn"
+            href="#"
+            target="_blank"
+            class="hidden w-full bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            <i data-lucide="compass" class="w-5 h-5"></i>
+            用 Safari 開啟 (iOS 推薦)
+          </a>
 
-        <!-- Processing -->
-        <div id="processingState" class="hidden flex-col items-center justify-center fixed inset-0 z-[100] bg-black/90 backdrop-blur-md">
-            <div class="relative w-20 h-20 mb-4">
-                <div class="absolute inset-0 border-4 border-slate-500/30 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-[#06C755] rounded-full border-t-transparent animate-spin"></div>
-            </div>
-            <p class="text-white font-bold text-lg">AI 分析中...</p>
+          <button
+            onclick="attemptStartCamera()"
+            class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            <i data-lucide="aperture" class="w-5 h-5"></i>開啟相機
+          </button>
+          <button
+            onclick="triggerFileInput()"
+            class="w-full bg-white hover:bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform border border-slate-200"
+          >
+            <i data-lucide="image" class="w-5 h-5"></i>上傳圖片
+          </button>
         </div>
+        <input
+          type="file"
+          id="fileInput"
+          accept="image/*"
+          class="hidden"
+          onchange="handleFileSelect(event)"
+        />
+      </div>
 
-        <!-- Result Card -->
-        <div id="resultCard" class="glass-panel rounded-2xl p-0 shadow-xl hidden transition-all duration-500 overflow-hidden flex flex-col max-h-[85vh] w-full">
-            <div class="bg-slate-50 border-b p-3 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-16 h-10 bg-slate-200 overflow-hidden border border-slate-300 relative rounded shadow-sm"><img id="contactPhotoPreview" class="w-full h-full object-cover"></div>
-                    <div><h3 class="text-sm font-bold text-slate-700">辨識結果</h3></div>
-                </div>
-                <button onclick="resetApp()" class="text-xs text-red-500 hover:text-red-600 px-2 py-1">重掃</button>
-            </div>
-            <form id="contactForm" class="p-4 space-y-3 bg-white flex-1 overflow-y-auto">
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold uppercase ml-1">姓名</label><input type="text" id="fieldName" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-bold"></div>
-                    <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold uppercase ml-1">職稱</label><input type="text" id="fieldTitle" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-600 text-sm"></div>
-                </div>
-                <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold uppercase ml-1">公司</label><input type="text" id="fieldCompany" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"></div>
-                <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold uppercase ml-1">手機</label><input type="tel" id="fieldMobile" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"></div>
-                <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold uppercase ml-1">Email</label><input type="email" id="fieldEmail" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"></div>
-                <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold uppercase ml-1">地址</label><input type="text" id="fieldAddress" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"></div>
-            </form>
-            <div class="p-4 bg-slate-50 border-t space-y-2">
-                <button onclick="exportContact()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                    <i data-lucide="download" class="w-5 h-5"></i>
-                    匯入手機通訊錄
-                </button>
-            </div>
+      <!-- Camera Interface -->
+      <div id="cameraInterface">
+        <div
+          class="absolute top-0 left-0 right-0 z-[100] p-4 flex justify-between items-center text-white bg-gradient-to-b from-black/60 to-transparent"
+        >
+          <button
+            onclick="closeCamera()"
+            class="p-2 bg-white/10 rounded-full backdrop-blur-md"
+          >
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+          <span class="text-sm font-medium tracking-wider shadow-sm"
+            >將名片放入框內</span
+          >
+          <button
+            onclick="switchCamera()"
+            class="p-2 bg-white/10 rounded-full backdrop-blur-md"
+          >
+            <i data-lucide="refresh-ccw" class="w-6 h-6"></i>
+          </button>
         </div>
+        <video id="cameraFeed" autoplay playsinline muted></video>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+        <div class="guide-overlay">
+          <div class="guide-box"><div class="scan-laser"></div></div>
+        </div>
+        <div
+          class="absolute bottom-0 left-0 right-0 h-32 bg-black/50 backdrop-blur-sm flex flex-col justify-center items-center pb-6 z-[100]"
+        >
+          <button
+            onclick="takePhoto()"
+            class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform bg-white/20"
+          >
+            <div class="w-16 h-16 bg-white rounded-full"></div>
+          </button>
+        </div>
+      </div>
 
-        <!-- LINE Error Modal (Only for iOS users who persist) -->
-        <div id="lineErrorModal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
-            <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
-                <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
-                <div class="flex items-center gap-2 mb-4 text-amber-500"><i data-lucide="external-link" class="w-6 h-6"></i><h3 class="text-lg font-bold text-slate-800">iOS 下載限制</h3></div>
-                <p class="text-sm text-slate-600 mb-4 font-medium">請點擊首頁上方的「用 Safari 開啟」按鈕，才能將名片存入 iPhone 通訊錄。</p>
-                <button onclick="document.getElementById('lineErrorModal').classList.add('hidden')" class="w-full mt-6 bg-[#06C755] text-white py-3 rounded-xl font-bold">我了解了</button>
-            </div>
+      <!-- Processing -->
+      <div
+        id="processingState"
+        class="hidden flex-col items-center justify-center fixed inset-0 z-[100] bg-black/90 backdrop-blur-md"
+      >
+        <div class="relative w-20 h-20 mb-4">
+          <div
+            class="absolute inset-0 border-4 border-slate-500/30 rounded-full"
+          ></div>
+          <div
+            class="absolute inset-0 border-4 border-[#06C755] rounded-full border-t-transparent animate-spin"
+          ></div>
         </div>
+        <p class="text-white font-bold text-lg">AI 分析中...</p>
+      </div>
+
+      <!-- Result Card -->
+      <div
+        id="resultCard"
+        class="glass-panel rounded-2xl p-0 shadow-xl hidden transition-all duration-500 overflow-hidden flex flex-col max-h-[85vh] w-full"
+      >
+        <div class="bg-slate-50 border-b p-3 flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-16 h-10 bg-slate-200 overflow-hidden border border-slate-300 relative rounded shadow-sm"
+            >
+              <img
+                id="contactPhotoPreview"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-700">辨識結果</h3>
+            </div>
+          </div>
+          <button
+            onclick="resetApp()"
+            class="text-xs text-red-500 hover:text-red-600 px-2 py-1"
+          >
+            重掃
+          </button>
+        </div>
+        <form
+          id="contactForm"
+          class="p-4 space-y-3 bg-white flex-1 overflow-y-auto"
+        >
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
+                >姓名</label
+              ><input
+                type="text"
+                id="fieldName"
+                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-bold"
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
+                >職稱</label
+              ><input
+                type="text"
+                id="fieldTitle"
+                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-600 text-sm"
+              />
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
+              >公司</label
+            ><input
+              type="text"
+              id="fieldCompany"
+              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
+            />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
+              >手機</label
+            ><input
+              type="tel"
+              id="fieldMobile"
+              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
+            />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
+              >Email</label
+            ><input
+              type="email"
+              id="fieldEmail"
+              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
+            />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
+              >地址</label
+            ><input
+              type="text"
+              id="fieldAddress"
+              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
+            />
+          </div>
+        </form>
+        <div class="p-4 bg-slate-50 border-t space-y-2">
+          <button
+            onclick="exportContact()"
+            class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            <i data-lucide="download" class="w-5 h-5"></i>
+            匯入手機通訊錄
+          </button>
+        </div>
+      </div>
+
+      <!-- LINE Error Modal (Only for iOS users who persist) -->
+      <div
+        id="lineErrorModal"
+        class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in"
+      >
+        <div
+          class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative"
+        >
+          <button
+            onclick="document.getElementById('lineErrorModal').classList.add('hidden')"
+            class="absolute top-4 right-4 text-slate-400"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+          <div class="flex items-center gap-2 mb-4 text-amber-500">
+            <i data-lucide="external-link" class="w-6 h-6"></i>
+            <h3 class="text-lg font-bold text-slate-800">iOS 下載限制</h3>
+          </div>
+          <p class="text-sm text-slate-600 mb-4 font-medium">
+            請點擊首頁上方的「用 Safari 開啟」按鈕，才能將名片存入 iPhone
+            通訊錄。
+          </p>
+          <button
+            onclick="document.getElementById('lineErrorModal').classList.add('hidden')"
+            class="w-full mt-6 bg-[#06C755] text-white py-3 rounded-xl font-bold"
+          >
+            我了解了
+          </button>
+        </div>
+      </div>
     </main>
 
     <script>
-        const AUTO_API_KEY = "AIzaSyCdVLSq3gcD1CnWnRHnsgNgk01JMSfh5XA"; 
-        const GOOGLE_SCRIPT_URL = ""; 
-        const MODEL_NAME = "gemini-2.0-flash"; 
-        
-        let stream = null;
-        let facingMode = "environment";
-        let currentHighResBase64 = null;
+      // ==========================================
+      // ★ 請替換以下這塊設定區域 ★
+      // ==========================================
 
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            const ua = navigator.userAgent || navigator.vendor || window.opera;
-            const isLine = (ua.indexOf("Line") > -1);
-            const isAndroid = /Android/i.test(ua);
-            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-            
-            // --- ★ 智慧分流邏輯 ★ ---
-            if (isLine) {
-                document.getElementById('browserInfo').textContent = isAndroid ? "Android LINE" : "iOS LINE";
-                
-                // 只有 iOS 且在 LINE 裡面，才顯示「用 Safari 開啟」
-                // Android 保持乾淨，因為 Android LINE 可以直接處理下載
-                if (isIOS) {
-                    const btn = document.getElementById('openInBrowserBtn');
-                    btn.classList.remove('hidden');
-                    btn.classList.add('flex');
-                    
-                    const currentUrl = location.href;
-                    btn.href = `${currentUrl}${currentUrl.includes('?') ? '&' : '?'}openExternalBrowser=1`;
-                }
+      // 1. 填入你剛剛申請的全新 API Key
+      const AUTO_API_KEY = "你的_NEW_API_KEY_貼在這裡";
+
+      // 2. 改用這個模型 (速度快且支援度較新)
+      const MODEL_NAME = "gemini-2.5-flash";
+
+      // (保留原本的變數)
+      const GOOGLE_SCRIPT_URL = "";
+      let stream = null;
+      let facingMode = "environment";
+      let currentHighResBase64 = null;
+
+      document.addEventListener("DOMContentLoaded", () => {
+        lucide.createIcons();
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isLine = ua.indexOf("Line") > -1;
+        const isAndroid = /Android/i.test(ua);
+        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+        // --- ★ 智慧分流邏輯 ★ ---
+        if (isLine) {
+          document.getElementById("browserInfo").textContent = isAndroid
+            ? "Android LINE"
+            : "iOS LINE";
+
+          // 只有 iOS 且在 LINE 裡面，才顯示「用 Safari 開啟」
+          // Android 保持乾淨，因為 Android LINE 可以直接處理下載
+          if (isIOS) {
+            const btn = document.getElementById("openInBrowserBtn");
+            btn.classList.remove("hidden");
+            btn.classList.add("flex");
+
+            const currentUrl = location.href;
+            btn.href = `${currentUrl}${
+              currentUrl.includes("?") ? "&" : "?"
+            }openExternalBrowser=1`;
+          }
+        } else {
+          document.getElementById("browserInfo").textContent = "Web Mode";
+        }
+
+        if (!AUTO_API_KEY) alert("嚴重錯誤：API Key 未設定");
+      });
+
+      // --- Camera Logic ---
+      async function analyzeImage(base64Data) {
+        if (!base64Data) {
+          return showToast("error", "影像擷取失敗");
+        }
+
+        const loading = document.getElementById("processingState");
+        loading.classList.remove("hidden");
+        loading.classList.add("flex");
+
+        try {
+          // 建構請求 URL
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${AUTO_API_KEY}`;
+
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    // 提示詞優化：明確要求不要 Markdown，只要純 JSON
+                    {
+                      text: "Extract business card info into strict JSON: name, title, company, mobile, email, address. Return ONLY the JSON object. Do not use Markdown formatting.",
+                    },
+                    {
+                      inlineData: { mimeType: "image/jpeg", data: base64Data },
+                    },
+                  ],
+                },
+              ],
+            }),
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.error("API Error Details:", errData);
+
+            if (res.status === 403) {
+              alert(
+                "⛔ 權限錯誤 (403)：\n1. 請檢查 API Key 是否正確\n2. 請確認 Google Cloud Console 已啟用 'Generative Language API'\n3. 如果是新 Key，請等待 1-2 分鐘生效"
+              );
+            } else if (res.status === 404) {
+              alert(
+                `⛔ 模型錯誤 (404)：\n模型 ${MODEL_NAME} 可能暫時無法使用。\n請回到程式碼將 MODEL_NAME 改為 'gemini-2.0-flash-001' 試試看。`
+              );
             } else {
-                document.getElementById('browserInfo').textContent = "Web Mode";
+              alert(`API 錯誤 (${res.status})：請查看 Console 了解詳情`);
             }
-            
-            if(!AUTO_API_KEY) alert("嚴重錯誤：API Key 未設定");
-        });
+            throw new Error(`API Error ${res.status}`);
+          }
 
-        // --- Camera Logic ---
-        async function attemptStartCamera() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return showToast('error', '不支援相機');
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode, width: { ideal: 1920 } } });
-                onCameraSuccess(stream);
-            } catch (err) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode } });
-                    onCameraSuccess(stream);
-                } catch (fatalErr) {
-                    showToast('error', '相機啟動失敗，請改用上傳');
-                    setTimeout(() => triggerFileInput(), 1500);
-                }
-            }
-        }
-        function onCameraSuccess(stream) {
-            const video = document.getElementById('cameraFeed');
-            video.srcObject = stream;
-            video.onloadedmetadata = () => {
-                video.play();
-                document.getElementById('startScreen').classList.add('hidden');
-                document.getElementById('cameraInterface').classList.add('active');
-            };
-        }
-        function stopCamera() {
-            if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
-            document.getElementById('cameraInterface').classList.remove('active');
-        }
-        function closeCamera() { stopCamera(); document.getElementById('startScreen').classList.remove('hidden'); }
-        async function switchCamera() { stopCamera(); facingMode = facingMode === "environment" ? "user" : "environment"; await attemptStartCamera(); }
-        
-        function takePhoto() {
-            const video = document.getElementById('cameraFeed');
-            const canvas = document.getElementById('cameraCanvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-            
-            const finalBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            currentHighResBase64 = finalBase64.split(',')[1];
-            document.getElementById('contactPhotoPreview').src = finalBase64;
+          const data = await res.json();
 
-            closeCamera();
+          // --- ★ 新版：更強的 JSON 解析邏輯 ★ ---
+          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+          console.log("AI 原始回應:", text); // 方便你在 F12 Console 除錯
+
+          // 1. 暴力移除 Markdown 標記 (```json, ```)
+          text = text
+            .replace(/```\w*\n?/g, "")
+            .replace(/```/g, "")
+            .trim();
+
+          // 2. 精準抓取第一個 { 到最後一個 }
+          const firstBrace = text.indexOf("{");
+          const lastBrace = text.lastIndexOf("}");
+
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            text = text.substring(firstBrace, lastBrace + 1);
+          }
+
+          // 3. 解析 JSON
+          const card = JSON.parse(text);
+
+          // --- 資料填入欄位 ---
+          document.getElementById("fieldName").value = card.name || "";
+          document.getElementById("fieldTitle").value = card.title || "";
+          document.getElementById("fieldCompany").value = card.company || "";
+          document.getElementById("fieldMobile").value = card.mobile || "";
+          document.getElementById("fieldEmail").value = card.email || "";
+          document.getElementById("fieldAddress").value = card.address || "";
+
+          // (選擇性) Google Sheet 串接
+          if (typeof GOOGLE_SCRIPT_URL !== "undefined" && GOOGLE_SCRIPT_URL) {
+            fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              mode: "no-cors",
+              cache: "no-cache",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...card,
+                timestamp: new Date().toISOString(),
+              }),
+            }).catch((e) => console.error(e));
+          }
+
+          // 成功：隱藏 Loading，顯示結果
+          loading.classList.add("hidden");
+          loading.classList.remove("flex");
+          document.getElementById("resultCard").classList.remove("hidden");
+          document.getElementById("startScreen").classList.add("hidden");
+        } catch (error) {
+          console.error(error);
+          loading.classList.add("hidden");
+          loading.classList.remove("flex");
+          // 只有在非 403 的情況下才把畫面切回去，方便使用者看到 Alert 訊息
+          if (
+            !error.message.includes("403") &&
+            !error.message.includes("404")
+          ) {
+            document.getElementById("startScreen").classList.remove("hidden");
+          }
+          showToast("error", "辨識失敗，請查看錯誤訊息");
+        }
+      }
+      function onCameraSuccess(stream) {
+        const video = document.getElementById("cameraFeed");
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          video.play();
+          document.getElementById("startScreen").classList.add("hidden");
+          document.getElementById("cameraInterface").classList.add("active");
+        };
+      }
+      function stopCamera() {
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        document.getElementById("cameraInterface").classList.remove("active");
+      }
+      function closeCamera() {
+        stopCamera();
+        document.getElementById("startScreen").classList.remove("hidden");
+      }
+      async function switchCamera() {
+        stopCamera();
+        facingMode = facingMode === "environment" ? "user" : "environment";
+        await attemptStartCamera();
+      }
+
+      function takePhoto() {
+        const video = document.getElementById("cameraFeed");
+        const canvas = document.getElementById("cameraCanvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0);
+
+        const finalBase64 = canvas.toDataURL("image/jpeg", 0.8);
+        currentHighResBase64 = finalBase64.split(",")[1];
+        document.getElementById("contactPhotoPreview").src = finalBase64;
+
+        closeCamera();
+        analyzeImage(currentHighResBase64);
+      }
+
+      // --- Upload & AI ---
+      function triggerFileInput() {
+        document.getElementById("fileInput").click();
+      }
+      function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const c = document.createElement("canvas");
+            const maxDim = 1500;
+            const scale =
+              img.width > maxDim || img.height > maxDim
+                ? maxDim / Math.max(img.width, img.height)
+                : 1;
+            c.width = img.width * scale;
+            c.height = img.height * scale;
+            c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+
+            const b64 = c.toDataURL("image/jpeg", 0.8);
+            currentHighResBase64 = b64.split(",")[1];
+            document.getElementById("contactPhotoPreview").src = b64;
             analyzeImage(currentHighResBase64);
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function analyzeImage(base64Data) {
+        if (!base64Data) {
+          return showToast("error", "影像擷取失敗");
         }
+        const loading = document.getElementById("processingState");
+        loading.classList.remove("hidden");
+        loading.classList.add("flex");
 
-        // --- Upload & AI ---
-        function triggerFileInput() { document.getElementById('fileInput').click(); }
-        function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => {
-                    const c = document.createElement('canvas');
-                    const maxDim = 1500;
-                    const scale = (img.width > maxDim || img.height > maxDim) ? (maxDim / Math.max(img.width, img.height)) : 1;
-                    c.width = img.width * scale; c.height = img.height * scale;
-                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-                    
-                    const b64 = c.toDataURL('image/jpeg', 0.8);
-                    currentHighResBase64 = b64.split(',')[1];
-                    document.getElementById('contactPhotoPreview').src = b64;
-                    analyzeImage(currentHighResBase64);
-                }
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        async function analyzeImage(base64Data) {
-            if (!base64Data) { return showToast('error', '影像擷取失敗'); }
-            const loading = document.getElementById('processingState');
-            loading.classList.remove('hidden'); loading.classList.add('flex');
-            
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${AUTO_API_KEY}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "Extract business card: name, title, company, mobile, email, address. Return strictly JSON." }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }] })
-                });
-                
-                if (!res.ok) {
-                    if (res.status === 403) alert("API 403 錯誤：請檢查金鑰網域限制");
-                    throw new Error(`API Error ${res.status}`);
-                }
-
-                const data = await res.json();
-                let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-                text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-                if(text.indexOf('{') > -1) text = text.substring(text.indexOf('{'), text.lastIndexOf('}')+1);
-                const card = JSON.parse(text);
-                
-                document.getElementById('fieldName').value = card.name || '';
-                document.getElementById('fieldTitle').value = card.title || '';
-                document.getElementById('fieldCompany').value = card.company || '';
-                document.getElementById('fieldMobile').value = card.mobile || '';
-                document.getElementById('fieldEmail').value = card.email || '';
-                document.getElementById('fieldAddress').value = card.address || '';
-                
-                if (GOOGLE_SCRIPT_URL) {
-                    fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...card, timestamp: new Date().toISOString() }) }).catch(e => console.error(e));
-                }
-
-                loading.classList.add('hidden'); loading.classList.remove('flex');
-                document.getElementById('resultCard').classList.remove('hidden'); document.getElementById('startScreen').classList.add('hidden');
-            } catch (error) { 
-                console.error(error);
-                loading.classList.add('hidden'); loading.classList.remove('flex'); 
-                document.getElementById('startScreen').classList.remove('hidden'); 
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${AUTO_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      {
+                        text: "Extract business card: name, title, company, mobile, email, address. Return strictly JSON.",
+                      },
+                      {
+                        inlineData: {
+                          mimeType: "image/jpeg",
+                          data: base64Data,
+                        },
+                      },
+                    ],
+                  },
+                ],
+              }),
             }
+          );
+
+          if (!res.ok) {
+            if (res.status === 403) alert("API 403 錯誤：請檢查金鑰網域限制");
+            throw new Error(`API Error ${res.status}`);
+          }
+
+          const data = await res.json();
+          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+          text = text
+            .replace(/```json/g, "")
+            .replace(/```/g, "")
+            .trim();
+          if (text.indexOf("{") > -1)
+            text = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
+          const card = JSON.parse(text);
+
+          document.getElementById("fieldName").value = card.name || "";
+          document.getElementById("fieldTitle").value = card.title || "";
+          document.getElementById("fieldCompany").value = card.company || "";
+          document.getElementById("fieldMobile").value = card.mobile || "";
+          document.getElementById("fieldEmail").value = card.email || "";
+          document.getElementById("fieldAddress").value = card.address || "";
+
+          if (GOOGLE_SCRIPT_URL) {
+            fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              mode: "no-cors",
+              cache: "no-cache",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...card,
+                timestamp: new Date().toISOString(),
+              }),
+            }).catch((e) => console.error(e));
+          }
+
+          loading.classList.add("hidden");
+          loading.classList.remove("flex");
+          document.getElementById("resultCard").classList.remove("hidden");
+          document.getElementById("startScreen").classList.add("hidden");
+        } catch (error) {
+          console.error(error);
+          loading.classList.add("hidden");
+          loading.classList.remove("flex");
+          document.getElementById("startScreen").classList.remove("hidden");
+        }
+      }
+
+      // --- Export (Smart Hybrid: Android Direct / iOS Jump) ---
+      function exportContact() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+        const isLine = ua.indexOf("Line") > -1;
+
+        // 1. iOS + LINE: 無法下載，顯示 Modal 引導跳轉
+        if (isIOS && isLine) {
+          document.getElementById("lineErrorModal").classList.remove("hidden");
+          return;
         }
 
-        // --- Export (Smart Hybrid: Android Direct / iOS Jump) ---
-        function exportContact() {
-            const ua = navigator.userAgent || navigator.vendor || window.opera;
-            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-            const isLine = (ua.indexOf("Line") > -1);
-            
-            // 1. iOS + LINE: 無法下載，顯示 Modal 引導跳轉
-            if (isIOS && isLine) {
-                document.getElementById('lineErrorModal').classList.remove('hidden');
-                return;
-            }
+        // 2. Android 或 一般瀏覽器: 正常執行
+        const name = document.getElementById("fieldName").value || "Contact";
+        const file = generateVCardFile(name);
 
-            // 2. Android 或 一般瀏覽器: 正常執行
-            const name = document.getElementById('fieldName').value || 'Contact';
-            const file = generateVCardFile(name);
-            
-            // Android 優先嘗試 Share (體驗最好)
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({ files: [file], title: '新增聯絡人' }).catch(() => startDownload());
-            } else {
-                startDownload();
-            }
+        // Android 優先嘗試 Share (體驗最好)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator
+            .share({ files: [file], title: "新增聯絡人" })
+            .catch(() => startDownload());
+        } else {
+          startDownload();
         }
+      }
 
-        function startDownload() {
-            const name = document.getElementById('fieldName').value || 'Contact';
-            const file = generateVCardFile(name);
-            const url = URL.createObjectURL(file);
-            const a = document.createElement('a');
-            a.style.display = 'none'; a.href = url; a.download = `${name}.vcf`;
-            document.body.appendChild(a); a.click();
-            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-            showToast('success', '檔案已產生，請點擊開啟');
-        }
+      function startDownload() {
+        const name = document.getElementById("fieldName").value || "Contact";
+        const file = generateVCardFile(name);
+        const url = URL.createObjectURL(file);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = `${name}.vcf`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+        showToast("success", "檔案已產生，請點擊開啟");
+      }
 
-        function generateVCardFile(name) {
-            let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${document.getElementById('fieldMobile').value}\nEMAIL:${document.getElementById('fieldEmail').value}\nORG;CHARSET=UTF-8:${document.getElementById('fieldCompany').value}\nTITLE;CHARSET=UTF-8:${document.getElementById('fieldTitle').value}\nADR;TYPE=WORK;CHARSET=UTF-8:;;${document.getElementById('fieldAddress').value};;;;\n`;
-            if (currentHighResBase64) {
-                vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
-            }
-            vcard += `END:VCARD`;
-            return new File([new Blob([vcard], { type: 'text/vcard;charset=utf-8' })], `${name}.vcf`, { type: 'text/vcard' });
+      function generateVCardFile(name) {
+        let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${
+          document.getElementById("fieldMobile").value
+        }\nEMAIL:${
+          document.getElementById("fieldEmail").value
+        }\nORG;CHARSET=UTF-8:${
+          document.getElementById("fieldCompany").value
+        }\nTITLE;CHARSET=UTF-8:${
+          document.getElementById("fieldTitle").value
+        }\nADR;TYPE=WORK;CHARSET=UTF-8:;;${
+          document.getElementById("fieldAddress").value
+        };;;;\n`;
+        if (currentHighResBase64) {
+          vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
         }
+        vcard += `END:VCARD`;
+        return new File(
+          [new Blob([vcard], { type: "text/vcard;charset=utf-8" })],
+          `${name}.vcf`,
+          { type: "text/vcard" }
+        );
+      }
 
-        function resetApp() {
-            document.getElementById('resultCard').classList.add('hidden');
-            document.getElementById('startScreen').classList.remove('hidden');
-        }
-        function showToast(type, msg) {
-            const t = document.getElementById('statusToast');
-            const i = document.getElementById('statusIcon');
-            const txt = document.getElementById('statusText');
-            t.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md ${type==='error'?'bg-red-500/90 text-white border-red-400':(type==='success'?'bg-green-500/90 text-white border-green-400':'bg-blue-500/90 text-white border-blue-400')}`;
-            i.innerHTML = `<i data-lucide="${type==='error'?'alert-circle':(type==='success'?'check-circle':'info')}" class="w-5 h-5"></i>`;
-            txt.innerText = msg;
-            t.classList.remove('hidden');
-            lucide.createIcons();
-            setTimeout(() => t.classList.add('hidden'), 4000);
-        }
+      function resetApp() {
+        document.getElementById("resultCard").classList.add("hidden");
+        document.getElementById("startScreen").classList.remove("hidden");
+      }
+      function showToast(type, msg) {
+        const t = document.getElementById("statusToast");
+        const i = document.getElementById("statusIcon");
+        const txt = document.getElementById("statusText");
+        t.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md ${
+          type === "error"
+            ? "bg-red-500/90 text-white border-red-400"
+            : type === "success"
+            ? "bg-green-500/90 text-white border-green-400"
+            : "bg-blue-500/90 text-white border-blue-400"
+        }`;
+        i.innerHTML = `<i data-lucide="${
+          type === "error"
+            ? "alert-circle"
+            : type === "success"
+            ? "check-circle"
+            : "info"
+        }" class="w-5 h-5"></i>`;
+        txt.innerText = msg;
+        t.classList.remove("hidden");
+        lucide.createIcons();
+        setTimeout(() => t.classList.add("hidden"), 4000);
+      }
     </script>
-</body>
+  </body>
 </html>
-
-
