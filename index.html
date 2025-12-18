@@ -380,12 +380,18 @@
       </div>
     </main>
 
-    <script>
-      // ★★★ 商業部署設定區 ★★★
-      const AUTO_API_KEY = "";
-      const GOOGLE_SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbx-Dr4vdYi51FbM_I6RP8L63OZh3Nljd9FwqC5jAuqfzthvw-zxVgvZSOlqSbYv1Wa6Ew/exec";
-      const MODEL_NAME = "gemini-2.5-flash";
+   <script>
+      // ==========================================
+      // ★★★ 設定區 (只改這裡) ★★★
+      // ==========================================
+      
+      // 請填入步驟一產生的 Google Apps Script 網址
+      const BACKEND_API_URL = "https://script.google.com/macros/s/AKfycbx-Dr4vdYi51FbM_I6RP8L63OZh3Nljd9FwqC5jAuqfzthvw-zxVgvZSOlqSbYv1Wa6Ew/exec"; 
+
+      // 這些舊變數都不需要了，保留定義避免報錯即可
+      const AUTO_API_KEY = ""; 
+      const GOOGLE_SCRIPT_URL = ""; 
+      const MODEL_NAME = "";
 
       let stream = null;
       let facingMode = "environment";
@@ -395,13 +401,17 @@
         lucide.createIcons();
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isLine = ua.indexOf("Line") > -1;
-        document.getElementById("browserInfo").textContent = isLine
-          ? "LINE Mode"
-          : "Web Mode";
-        if (!AUTO_API_KEY) alert("嚴重錯誤：API Key 未設定");
+        
+        // 檢查後端網址是否已設定
+        if (BACKEND_API_URL.includes("你的_GAS_部署ID")) {
+            document.getElementById("browserInfo").textContent = "尚未設定後端";
+            alert("請先設定 BACKEND_API_URL");
+        } else {
+            document.getElementById("browserInfo").textContent = isLine ? "LINE Mode (Backend)" : "Web Mode (Backend)";
+        }
       });
 
-      // --- Camera Logic ---
+      // --- Camera Logic (保持不變) ---
       async function attemptStartCamera() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
           return showToast("error", "不支援相機");
@@ -464,7 +474,7 @@
         analyzeImage(currentHighResBase64);
       }
 
-      // --- Upload & AI ---
+      // --- Upload Logic (保持不變) ---
       function triggerFileInput() {
         document.getElementById("fileInput").click();
       }
@@ -495,6 +505,7 @@
         reader.readAsDataURL(file);
       }
 
+      // --- ★★★ 核心修改：改用後端代理 (Proxy) ★★★ ---
       async function analyzeImage(base64Data) {
         if (!base64Data) {
           return showToast("error", "影像擷取失敗");
@@ -504,46 +515,29 @@
         loading.classList.add("flex");
 
         try {
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${AUTO_API_KEY}`,
-            {
+          // 修改重點：不再直接呼叫 Google，而是呼叫你的 Apps Script
+          const res = await fetch(BACKEND_API_URL, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      {
-                        text: "Extract business card: name, title, company, mobile, email, address. Return strictly JSON.",
-                      },
-                      {
-                        inlineData: {
-                          mimeType: "image/jpeg",
-                          data: base64Data,
-                        },
-                      },
-                    ],
-                  },
-                ],
-              }),
+              // GAS 需要用 text/plain 避免 CORS 預檢失敗
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ image: base64Data }),
             }
           );
 
           if (!res.ok) {
-            if (res.status === 403) alert("API 403 錯誤：請檢查金鑰網域限制");
-            throw new Error(`API Error ${res.status}`);
+            throw new Error(`Server Error ${res.status}`);
           }
 
-          const data = await res.json();
-          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-          text = text
-            .replace(/```json/g, "")
-            .replace(/```/g, "")
-            .trim();
-          if (text.indexOf("{") > -1)
-            text = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
-          const card = JSON.parse(text);
+          const responseJson = await res.json();
 
+          // 檢查後端是否回傳成功
+          if (responseJson.status !== "success") {
+             throw new Error(responseJson.message || "Unknown error");
+          }
+
+          const card = responseJson.data;
+
+          // 填入資料
           document.getElementById("fieldName").value = card.name || "";
           document.getElementById("fieldTitle").value = card.title || "";
           document.getElementById("fieldCompany").value = card.company || "";
@@ -551,28 +545,18 @@
           document.getElementById("fieldEmail").value = card.email || "";
           document.getElementById("fieldAddress").value = card.address || "";
 
-          if (GOOGLE_SCRIPT_URL) {
-            fetch(GOOGLE_SCRIPT_URL, {
-              method: "POST",
-              mode: "no-cors",
-              cache: "no-cache",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                ...card,
-                timestamp: new Date().toISOString(),
-              }),
-            }).catch((e) => console.error(e));
-          }
-
+          // 成功切換畫面
           loading.classList.add("hidden");
           loading.classList.remove("flex");
           document.getElementById("resultCard").classList.remove("hidden");
           document.getElementById("startScreen").classList.add("hidden");
+
         } catch (error) {
           console.error(error);
           loading.classList.add("hidden");
           loading.classList.remove("flex");
           document.getElementById("startScreen").classList.remove("hidden");
+          showToast("error", "辨識失敗，請稍後再試");
         }
       }
 
@@ -589,10 +573,16 @@
               .classList.remove("hidden");
             return;
           }
-          startDownload();
+          // iOS Safari 強制使用 location.href 跳轉 (最穩定)
+          const name = document.getElementById("fieldName").value || "Contact";
+          const file = generateVCardFile(name);
+          const url = URL.createObjectURL(file);
+          window.location.href = url;
+          setTimeout(() => URL.revokeObjectURL(url), 3000);
           return;
         }
 
+        // Android / PC 邏輯
         const name = document.getElementById("fieldName").value || "Contact";
         const file = generateVCardFile(name);
 
@@ -622,9 +612,8 @@
         showToast("success", "檔案已產生，請點擊開啟");
       }
 
-      // --- ★ VCard Generation (Fix Name Field) ★ ---
+      // --- VCard Generation ---
       function generateVCardFile(name) {
-        // N 欄位是關鍵：名字;;;;
         let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${
           document.getElementById("fieldMobile").value
         }\nEMAIL:${
@@ -677,3 +666,4 @@
     </script>
   </body>
 </html>
+
