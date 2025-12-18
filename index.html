@@ -380,19 +380,16 @@
       </div>
     </main>
 
-   <script>
+    <script>
       // ==========================================
-      // ★★★ 設定區 (只改這裡) ★★★
+      // ★★★ 設定區 ★★★
       // ==========================================
-      
-      // 請填入步驟一產生的 Google Apps Script 網址
-      const BACKEND_API_URL = "https://script.google.com/macros/s/AKfycbx-Dr4vdYi51FbM_I6RP8L63OZh3Nljd9FwqC5jAuqfzthvw-zxVgvZSOlqSbYv1Wa6Ew/exec"; 
 
-      // 這些舊變數都不需要了，保留定義避免報錯即可
-      const AUTO_API_KEY = ""; 
-      const GOOGLE_SCRIPT_URL = ""; 
-      const MODEL_NAME = "";
+      // 請填入你剛剛部署好的 Google Apps Script 新網址
+      const BACKEND_API_URL =
+        "https://script.google.com/macros/s/AKfycbx-Dr4vdYi51FbM_I6RP8L63OZh3Nljd9FwqC5jAuqfzthvw-zxVgvZSOlqSbYv1Wa6Ew/exec";
 
+      // 這些全域變數保持不變
       let stream = null;
       let facingMode = "environment";
       let currentHighResBase64 = null;
@@ -401,20 +398,15 @@
         lucide.createIcons();
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isLine = ua.indexOf("Line") > -1;
-        
-        // 檢查後端網址是否已設定
-        if (BACKEND_API_URL.includes("你的_GAS_部署ID")) {
-            document.getElementById("browserInfo").textContent = "尚未設定後端";
-            alert("請先設定 BACKEND_API_URL");
-        } else {
-            document.getElementById("browserInfo").textContent = isLine ? "LINE Mode (Backend)" : "Web Mode (Backend)";
-        }
+        document.getElementById("browserInfo").textContent = isLine
+          ? "Line Mode"
+          : "Web Mode";
       });
 
-      // --- Camera Logic (保持不變) ---
+      // --- Camera Logic (修正版：加入壓縮) ---
       async function attemptStartCamera() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
-          return showToast("error", "不支援相機");
+          return showToast("error", "瀏覽器不支援相機");
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: facingMode, width: { ideal: 1920 } },
@@ -432,6 +424,7 @@
           }
         }
       }
+
       function onCameraSuccess(stream) {
         const video = document.getElementById("cameraFeed");
         video.srcObject = stream;
@@ -441,6 +434,7 @@
           document.getElementById("cameraInterface").classList.add("active");
         };
       }
+
       function stopCamera() {
         if (stream) {
           stream.getTracks().forEach((track) => track.stop());
@@ -448,25 +442,43 @@
         }
         document.getElementById("cameraInterface").classList.remove("active");
       }
+
       function closeCamera() {
         stopCamera();
         document.getElementById("startScreen").classList.remove("hidden");
       }
+
       async function switchCamera() {
         stopCamera();
         facingMode = facingMode === "environment" ? "user" : "environment";
         await attemptStartCamera();
       }
 
+      // ★ 修改重點：拍照時強制縮小圖片 ★
       function takePhoto() {
         const video = document.getElementById("cameraFeed");
         const canvas = document.getElementById("cameraCanvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0);
 
-        const finalBase64 = canvas.toDataURL("image/jpeg", 0.8);
+        // 設定最大邊長為 800px (保證後端收得到)
+        const maxDim = 800;
+        let w = video.videoWidth;
+        let h = video.videoHeight;
+
+        // 計算等比例縮放
+        if (w > maxDim || h > maxDim) {
+          const scale = maxDim / Math.max(w, h);
+          w = w * scale;
+          h = h * scale;
+        }
+
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, w, h);
+
+        // 轉出較小的 Base64
+        const finalBase64 = canvas.toDataURL("image/jpeg", 0.7);
         currentHighResBase64 = finalBase64.split(",")[1];
         document.getElementById("contactPhotoPreview").src = finalBase64;
 
@@ -474,19 +486,22 @@
         analyzeImage(currentHighResBase64);
       }
 
-      // --- Upload Logic (保持不變) ---
+      // --- Upload Logic (修正版：加強壓縮) ---
       function triggerFileInput() {
         document.getElementById("fileInput").click();
       }
+
       function handleFileSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
+
         const reader = new FileReader();
         reader.onload = (ev) => {
           const img = new Image();
           img.onload = () => {
             const c = document.createElement("canvas");
-            const maxDim = 1500;
+            // ★ 修改重點：將原本的 1500 改為 800，確保秒傳 ★
+            const maxDim = 800;
             const scale =
               img.width > maxDim || img.height > maxDim
                 ? maxDim / Math.max(img.width, img.height)
@@ -495,7 +510,7 @@
             c.height = img.height * scale;
             c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
 
-            const b64 = c.toDataURL("image/jpeg", 0.8);
+            const b64 = c.toDataURL("image/jpeg", 0.7);
             currentHighResBase64 = b64.split(",")[1];
             document.getElementById("contactPhotoPreview").src = b64;
             analyzeImage(currentHighResBase64);
@@ -505,50 +520,32 @@
         reader.readAsDataURL(file);
       }
 
-     // --- ★★★ 除錯版 Analyze (找出回傳失敗原因) ★★★ ---
+      // --- Analyze Logic (後端溝通) ---
       async function analyzeImage(base64Data) {
-        if (!base64Data) {
-          return showToast("error", "影像擷取失敗");
-        }
+        if (!base64Data) return showToast("error", "影像處理失敗");
+
         const loading = document.getElementById("processingState");
         loading.classList.remove("hidden");
         loading.classList.add("flex");
 
         try {
-          console.log("正在發送請求到後端..."); // Log 1
-
+          // 發送 POST 請求
           const res = await fetch(BACKEND_API_URL, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain;charset=utf-8" },
-              body: JSON.stringify({ image: base64Data }),
-            }
-          );
+            method: "POST",
+            // 避免 CORS 預檢請求問題，使用 text/plain
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ image: base64Data }),
+          });
 
-          // ★ 關鍵修改：不直接轉 json，先轉 text 印出來看 ★
-          const rawText = await res.text();
-          console.log("後端回傳的原始資料:", rawText); // 請在瀏覽器 F12 Console 看這裡！
+          const json = await res.json();
 
-          // 如果回傳的是 HTML 錯誤頁面 (常見於 GAS 權限設定錯誤)
-          if (rawText.includes("<!DOCTYPE html>") || rawText.includes("<html")) {
-              throw new Error("後端回傳了 HTML 而非 JSON，請檢查 Apps Script 部署權限是否為 'Anyone'");
+          if (json.status !== "success") {
+            throw new Error(json.message || "辨識失敗");
           }
 
-          // 嘗試解析 JSON
-          let responseJson;
-          try {
-              responseJson = JSON.parse(rawText);
-          } catch (e) {
-              throw new Error("JSON 解析失敗，後端回傳內容怪怪的");
-          }
+          const card = json.data;
 
-          // 檢查邏輯狀態
-          if (responseJson.status !== "success") {
-             throw new Error(responseJson.message || "後端邏輯錯誤");
-          }
-
-          const card = responseJson.data;
-
-          // 填入資料
+          // 填入介面
           document.getElementById("fieldName").value = card.name || "";
           document.getElementById("fieldTitle").value = card.title || "";
           document.getElementById("fieldCompany").value = card.company || "";
@@ -560,20 +557,23 @@
           loading.classList.remove("flex");
           document.getElementById("resultCard").classList.remove("hidden");
           document.getElementById("startScreen").classList.add("hidden");
-
+          showToast("success", "辨識成功");
         } catch (error) {
-          console.error("詳細錯誤內容:", error);
+          console.error(error);
           loading.classList.add("hidden");
           loading.classList.remove("flex");
-          
-          // 顯示更詳細的錯誤給你知道
-          alert(`雖然資料可能已存檔，但前端顯示錯誤：\n${error.message}`);
-          
+
+          // 如果是 HTML 錯誤，提示部署設定
+          if (error.message && error.message.includes("<")) {
+            alert("系統錯誤：後端權限設定異常，請確認 GAS 部署為 '任何人'");
+          } else {
+            alert("錯誤：" + error.message);
+          }
           document.getElementById("startScreen").classList.remove("hidden");
         }
       }
 
-      // --- Export (iOS Fixed: No Share, Force Download) ---
+      // --- Export Logic (保留你原本完美的邏輯) ---
       function exportContact() {
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -586,7 +586,6 @@
               .classList.remove("hidden");
             return;
           }
-          // iOS Safari 強制使用 location.href 跳轉 (最穩定)
           const name = document.getElementById("fieldName").value || "Contact";
           const file = generateVCardFile(name);
           const url = URL.createObjectURL(file);
@@ -595,7 +594,6 @@
           return;
         }
 
-        // Android / PC 邏輯
         const name = document.getElementById("fieldName").value || "Contact";
         const file = generateVCardFile(name);
 
@@ -622,10 +620,9 @@
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
         }, 100);
-        showToast("success", "檔案已產生，請點擊開啟");
+        showToast("success", "已下載 vCard");
       }
 
-      // --- VCard Generation ---
       function generateVCardFile(name) {
         let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${
           document.getElementById("fieldMobile").value
@@ -638,7 +635,9 @@
         }\nADR;TYPE=WORK;CHARSET=UTF-8:;;${
           document.getElementById("fieldAddress").value
         };;;;\n`;
+        // 如果有圖片，加回去
         if (currentHighResBase64) {
+          // 注意：有些手機通訊錄匯入太大的 Base64 會失敗，這裡用原本壓縮後的即可
           vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
         }
         vcard += `END:VCARD`;
@@ -652,7 +651,9 @@
       function resetApp() {
         document.getElementById("resultCard").classList.add("hidden");
         document.getElementById("startScreen").classList.remove("hidden");
+        document.getElementById("contactForm").reset();
       }
+
       function showToast(type, msg) {
         const t = document.getElementById("statusToast");
         const i = document.getElementById("statusIcon");
@@ -664,13 +665,13 @@
             ? "bg-green-500/90 text-white border-green-400"
             : "bg-blue-500/90 text-white border-blue-400"
         }`;
-        i.innerHTML = `<i data-lucide="${
-          type === "error"
-            ? "alert-circle"
-            : type === "success"
-            ? "check-circle"
-            : "info"
-        }" class="w-5 h-5"></i>`;
+
+        // 簡單的 icon 對應
+        let iconName = "info";
+        if (type === "success") iconName = "check-circle";
+        if (type === "error") iconName = "alert-circle";
+
+        i.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
         txt.innerText = msg;
         t.classList.remove("hidden");
         lucide.createIcons();
@@ -679,7 +680,3 @@
     </script>
   </body>
 </html>
-
-
-
-
