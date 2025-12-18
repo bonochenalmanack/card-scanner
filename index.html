@@ -505,7 +505,7 @@
         reader.readAsDataURL(file);
       }
 
-      // --- ★★★ 核心修改：改用後端代理 (Proxy) ★★★ ---
+     // --- ★★★ 除錯版 Analyze (找出回傳失敗原因) ★★★ ---
       async function analyzeImage(base64Data) {
         if (!base64Data) {
           return showToast("error", "影像擷取失敗");
@@ -515,24 +515,35 @@
         loading.classList.add("flex");
 
         try {
-          // 修改重點：不再直接呼叫 Google，而是呼叫你的 Apps Script
+          console.log("正在發送請求到後端..."); // Log 1
+
           const res = await fetch(BACKEND_API_URL, {
               method: "POST",
-              // GAS 需要用 text/plain 避免 CORS 預檢失敗
               headers: { "Content-Type": "text/plain;charset=utf-8" },
               body: JSON.stringify({ image: base64Data }),
             }
           );
 
-          if (!res.ok) {
-            throw new Error(`Server Error ${res.status}`);
+          // ★ 關鍵修改：不直接轉 json，先轉 text 印出來看 ★
+          const rawText = await res.text();
+          console.log("後端回傳的原始資料:", rawText); // 請在瀏覽器 F12 Console 看這裡！
+
+          // 如果回傳的是 HTML 錯誤頁面 (常見於 GAS 權限設定錯誤)
+          if (rawText.includes("<!DOCTYPE html>") || rawText.includes("<html")) {
+              throw new Error("後端回傳了 HTML 而非 JSON，請檢查 Apps Script 部署權限是否為 'Anyone'");
           }
 
-          const responseJson = await res.json();
+          // 嘗試解析 JSON
+          let responseJson;
+          try {
+              responseJson = JSON.parse(rawText);
+          } catch (e) {
+              throw new Error("JSON 解析失敗，後端回傳內容怪怪的");
+          }
 
-          // 檢查後端是否回傳成功
+          // 檢查邏輯狀態
           if (responseJson.status !== "success") {
-             throw new Error(responseJson.message || "Unknown error");
+             throw new Error(responseJson.message || "後端邏輯錯誤");
           }
 
           const card = responseJson.data;
@@ -545,18 +556,20 @@
           document.getElementById("fieldEmail").value = card.email || "";
           document.getElementById("fieldAddress").value = card.address || "";
 
-          // 成功切換畫面
           loading.classList.add("hidden");
           loading.classList.remove("flex");
           document.getElementById("resultCard").classList.remove("hidden");
           document.getElementById("startScreen").classList.add("hidden");
 
         } catch (error) {
-          console.error(error);
+          console.error("詳細錯誤內容:", error);
           loading.classList.add("hidden");
           loading.classList.remove("flex");
+          
+          // 顯示更詳細的錯誤給你知道
+          alert(`雖然資料可能已存檔，但前端顯示錯誤：\n${error.message}`);
+          
           document.getElementById("startScreen").classList.remove("hidden");
-          showToast("error", "辨識失敗，請稍後再試");
         }
       }
 
@@ -666,5 +679,6 @@
     </script>
   </body>
 </html>
+
 
 
