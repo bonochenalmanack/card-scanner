@@ -26,7 +26,6 @@
       .gradient-bg {
         background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
       }
-      /* Camera Interface Styles */
       #cameraInterface {
         position: fixed;
         top: 0;
@@ -51,6 +50,7 @@
         left: 0;
         z-index: 1;
       }
+      /* 掃描框動畫 */
       .guide-overlay {
         position: absolute;
         top: 0;
@@ -66,7 +66,7 @@
       .guide-box {
         position: relative;
         width: 85%;
-        aspect-ratio: 1.6/1; /* 名片比例 */
+        aspect-ratio: 1.6/1; 
         border-radius: 12px;
         box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
         border: 2px solid rgba(255, 255, 255, 0.5);
@@ -82,52 +82,38 @@
         animation: scanning 2s linear infinite;
       }
       @keyframes scanning {
-        0% {
-          top: 0%;
-          opacity: 0;
-        }
-        50% {
-          opacity: 1;
-        }
-        100% {
-          top: 100%;
-          opacity: 0;
-        }
+        0% { top: 0%; opacity: 0; }
+        50% { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
+      }
+      /* LINE 引導遮罩專用樣式 */
+      #lineBlocker {
+        backdrop-filter: blur(8px);
       }
     </style>
   </head>
-  <body
-    class="gradient-bg min-h-screen text-slate-800 flex flex-col items-center p-4"
-  >
-    <header
-      class="w-full max-w-md flex justify-between items-center mb-6 mt-2 text-white z-10"
-    >
+  <body class="gradient-bg min-h-screen text-slate-800 flex flex-col items-center p-4">
+    
+    <header class="w-full max-w-md flex justify-between items-center mb-6 mt-2 text-white z-10">
       <div class="flex items-center gap-2">
         <div class="bg-[#06C755] p-1.5 rounded-lg shadow-lg">
           <i data-lucide="scan-face" class="w-6 h-6 text-white"></i>
         </div>
         <div>
           <h1 class="text-lg font-bold">AI 名片管家</h1>
-          <p id="browserInfo" class="text-[10px] text-green-100">v3.0 Final</p>
+          <p id="browserInfo" class="text-[10px] text-green-100">v3.1 Pro</p>
         </div>
       </div>
     </header>
 
     <main class="w-full max-w-md relative z-0 flex-1 flex flex-col w-full">
-      <div
-        id="statusToast"
-        class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md"
-      >
+      
+      <div id="statusToast" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md">
         <span id="statusIcon"></span><span id="statusText"></span>
       </div>
 
-      <div
-        id="startScreen"
-        class="glass-panel rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center min-h-[400px] gap-6 animate-fade-in"
-      >
-        <div
-          class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner border-4 border-white"
-        >
+      <div id="startScreen" class="glass-panel rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center min-h-[400px] gap-6 animate-fade-in">
+        <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-inner border-4 border-white">
           <i data-lucide="camera" class="w-10 h-10"></i>
         </div>
         <div class="text-center px-4 mt-2">
@@ -135,45 +121,23 @@
           <p class="text-sm text-slate-500 mt-1">請將名片對準框框</p>
         </div>
         <div class="w-full space-y-3 mt-4">
-          <button
-            onclick="attemptStartCamera()"
-            class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform"
-          >
+          <button onclick="attemptStartCamera()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform">
             <i data-lucide="aperture" class="w-5 h-5"></i>開啟相機
           </button>
-          <button
-            onclick="triggerFileInput()"
-            class="w-full bg-white hover:bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform border border-slate-200"
-          >
+          <button onclick="triggerFileInput()" class="w-full bg-white hover:bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform border border-slate-200">
             <i data-lucide="image" class="w-5 h-5"></i>上傳圖片
           </button>
         </div>
-        <input
-          type="file"
-          id="fileInput"
-          accept="image/*"
-          class="hidden"
-          onchange="handleFileSelect(event)"
-        />
+        <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)" />
       </div>
 
       <div id="cameraInterface">
-        <div
-          class="absolute top-0 left-0 right-0 z-[100] p-4 flex justify-between items-center text-white bg-gradient-to-b from-black/60 to-transparent"
-        >
-          <button
-            onclick="closeCamera()"
-            class="p-2 bg-white/10 rounded-full backdrop-blur-md"
-          >
+        <div class="absolute top-0 left-0 right-0 z-[100] p-4 flex justify-between items-center text-white bg-gradient-to-b from-black/60 to-transparent">
+          <button onclick="closeCamera()" class="p-2 bg-white/10 rounded-full backdrop-blur-md">
             <i data-lucide="x" class="w-6 h-6"></i>
           </button>
-          <span class="text-sm font-medium tracking-wider shadow-sm"
-            >請對準框框</span
-          >
-          <button
-            onclick="switchCamera()"
-            class="p-2 bg-white/10 rounded-full backdrop-blur-md"
-          >
+          <span class="text-sm font-medium tracking-wider shadow-sm">請對準框框</span>
+          <button onclick="switchCamera()" class="p-2 bg-white/10 rounded-full backdrop-blur-md">
             <i data-lucide="refresh-ccw" class="w-6 h-6"></i>
           </button>
         </div>
@@ -182,193 +146,114 @@
         <div class="guide-overlay">
           <div class="guide-box"><div class="scan-laser"></div></div>
         </div>
-        <div
-          class="absolute bottom-0 left-0 right-0 h-32 bg-black/50 backdrop-blur-sm flex flex-col justify-center items-center pb-6 z-[100]"
-        >
-          <button
-            onclick="takePhoto()"
-            class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform bg-white/20"
-          >
+        <div class="absolute bottom-0 left-0 right-0 h-32 bg-black/50 backdrop-blur-sm flex flex-col justify-center items-center pb-6 z-[100]">
+          <button onclick="takePhoto()" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform bg-white/20">
             <div class="w-16 h-16 bg-white rounded-full"></div>
           </button>
         </div>
       </div>
 
-      <div
-        id="processingState"
-        class="hidden flex-col items-center justify-center fixed inset-0 z-[100] bg-black/90 backdrop-blur-md"
-      >
+      <div id="processingState" class="hidden flex-col items-center justify-center fixed inset-0 z-[100] bg-black/90 backdrop-blur-md">
         <div class="relative w-20 h-20 mb-4">
-          <div
-            class="absolute inset-0 border-4 border-slate-500/30 rounded-full"
-          ></div>
-          <div
-            class="absolute inset-0 border-4 border-[#06C755] rounded-full border-t-transparent animate-spin"
-          ></div>
+          <div class="absolute inset-0 border-4 border-slate-500/30 rounded-full"></div>
+          <div class="absolute inset-0 border-4 border-[#06C755] rounded-full border-t-transparent animate-spin"></div>
         </div>
         <p class="text-white font-bold text-lg">AI 正在讀取名片...</p>
       </div>
 
-      <div
-        id="resultCard"
-        class="glass-panel rounded-2xl p-0 shadow-xl hidden transition-all duration-500 overflow-hidden flex flex-col max-h-[85vh] w-full"
-      >
+      <div id="resultCard" class="glass-panel rounded-2xl p-0 shadow-xl hidden transition-all duration-500 overflow-hidden flex flex-col max-h-[85vh] w-full">
         <div class="bg-slate-50 border-b p-3 flex justify-between items-center">
           <div class="flex items-center gap-3">
-            <div
-              class="w-16 h-10 bg-slate-200 overflow-hidden border border-slate-300 relative rounded shadow-sm"
-            >
-              <img
-                id="contactPhotoPreview"
-                class="w-full h-full object-cover"
-              />
+            <div class="w-16 h-10 bg-slate-200 overflow-hidden border border-slate-300 relative rounded shadow-sm">
+              <img id="contactPhotoPreview" class="w-full h-full object-cover" />
             </div>
-            <div>
-              <h3 class="text-sm font-bold text-slate-700">辨識結果</h3>
-            </div>
+            <div><h3 class="text-sm font-bold text-slate-700">辨識結果</h3></div>
           </div>
-          <button
-            onclick="resetApp()"
-            class="text-xs text-red-500 hover:text-red-600 px-2 py-1"
-          >
-            重掃
-          </button>
+          <button onclick="resetApp()" class="text-xs text-red-500 hover:text-red-600 px-2 py-1">重掃</button>
         </div>
-        <form
-          id="contactForm"
-          class="p-4 space-y-3 bg-white flex-1 overflow-y-auto"
-        >
+        <form id="contactForm" class="p-4 space-y-3 bg-white flex-1 overflow-y-auto">
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
-              <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
-                >姓名</label
-              >
-              <input
-                type="text"
-                id="fieldName"
-                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-bold"
-              />
+              <label class="text-[10px] text-slate-400 font-bold uppercase ml-1">姓名</label>
+              <input type="text" id="fieldName" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-bold" />
             </div>
             <div class="space-y-1">
-              <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
-                >職稱</label
-              >
-              <input
-                type="text"
-                id="fieldTitle"
-                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-600 text-sm"
-              />
+              <label class="text-[10px] text-slate-400 font-bold uppercase ml-1">職稱</label>
+              <input type="text" id="fieldTitle" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-600 text-sm" />
             </div>
           </div>
           <div class="space-y-1">
-            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
-              >公司</label
-            >
-            <input
-              type="text"
-              id="fieldCompany"
-              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
-            />
+            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1">公司</label>
+            <input type="text" id="fieldCompany" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm" />
           </div>
           <div class="space-y-1">
-            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
-              >手機</label
-            >
-            <input
-              type="tel"
-              id="fieldMobile"
-              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
-            />
+            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1">手機</label>
+            <input type="tel" id="fieldMobile" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm" />
           </div>
           <div class="space-y-1">
-            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
-              >Email</label
-            >
-            <input
-              type="email"
-              id="fieldEmail"
-              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
-            />
+            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1">Email</label>
+            <input type="email" id="fieldEmail" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm" />
           </div>
           <div class="space-y-1">
-            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
-              >地址</label
-            >
-            <input
-              type="text"
-              id="fieldAddress"
-              class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
-            />
+            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1">地址</label>
+            <input type="text" id="fieldAddress" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm" />
           </div>
         </form>
         <div class="p-4 bg-slate-50 border-t space-y-2">
-          <button
-            onclick="exportContact()"
-            class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"
-          >
+          <button onclick="exportContact()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
             <i data-lucide="download" class="w-5 h-5"></i>匯入手機通訊錄
           </button>
         </div>
       </div>
 
-      <div
-        id="lineErrorModal"
-        class="hidden fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex flex-col items-end p-6 animate-fade-in touch-none"
-        onclick="document.getElementById('lineErrorModal').classList.add('hidden')"
-      >
-        <div class="mr-2 mt-2 flex flex-col items-end animate-bounce">
-          <i
-            data-lucide="arrow-up-right"
-            class="w-16 h-16 text-[#06C755] stroke-[3]"
-          ></i>
+      <div id="lineBlocker" class="hidden fixed inset-0 z-[9999] bg-slate-900/95 flex flex-col items-end p-6 animate-fade-in touch-none">
+        
+        <div class="mr-2 mt-4 flex flex-col items-end animate-bounce">
+          <i data-lucide="arrow-up-right" class="w-20 h-20 text-[#06C755] stroke-[3]"></i>
         </div>
-        <div class="mt-4 mr-2 max-w-[280px] text-right">
-          <h3 class="text-2xl font-bold text-white mb-2">
-            點擊右上角
-            <span class="inline-block bg-[#06C755] text-white px-2 rounded"
-              >●●●</span
-            >
-          </h3>
-          <p class="text-white/80 text-lg font-medium leading-relaxed">
-            選擇 <span class="text-[#06C755] font-bold">開啟瀏覽器</span><br />
-            即可匯入通訊錄
-          </p>
+
+        <div class="mt-6 mr-2 max-w-[300px] text-right">
+            <h3 class="text-3xl font-bold text-white mb-3">
+                請切換瀏覽器
+            </h3>
+            <p class="text-white/90 text-xl font-medium leading-relaxed">
+                為了能順利匯入聯絡人，<br>
+                請點擊右上角
+                <span class="inline-block bg-white/20 text-white px-2 py-0.5 rounded mx-1">●●●</span><br>
+                選擇 <span class="text-[#06C755] font-bold text-2xl">開啟瀏覽器</span>
+            </p>
         </div>
-        <div
-          class="mt-auto w-full flex flex-col items-center justify-center text-white/50 gap-4 mb-10"
-        >
-          <div class="flex items-center gap-4">
-            <div class="flex flex-col items-center gap-2">
-              <div
-                class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"
-              >
-                <i data-lucide="more-horizontal" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs">1. 點選選單</span>
+
+        <div class="mt-auto w-full flex flex-col items-center justify-center text-white/50 gap-6 mb-12">
+            <div class="flex items-center gap-6 justify-center w-full">
+                 <div class="flex flex-col items-center gap-2">
+                    <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
+                        <i data-lucide="more-horizontal" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <span class="text-sm">1. 點擊選單</span>
+                 </div>
+                 <i data-lucide="arrow-right" class="w-6 h-6 opacity-40"></i>
+                 <div class="flex flex-col items-center gap-2">
+                    <div class="w-14 h-14 rounded-2xl bg-[#06C755]/20 flex items-center justify-center border border-[#06C755]/50 shadow-[0_0_15px_rgba(6,199,85,0.3)]">
+                        <i data-lucide="compass" class="w-8 h-8 text-[#06C755]"></i>
+                    </div>
+                    <span class="text-sm text-[#06C755]">2. 開啟瀏覽器</span>
+                 </div>
             </div>
-            <i data-lucide="arrow-right" class="w-4 h-4 opacity-50"></i>
-            <div class="flex flex-col items-center gap-2">
-              <div
-                class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"
-              >
-                <i data-lucide="compass" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs">2. 開啟瀏覽器</span>
-            </div>
-          </div>
-          <p class="text-sm border-b border-white/20 pb-0.5 mt-4">
-            輕觸螢幕關閉提示
-          </p>
+            
+            <button onclick="document.getElementById('lineBlocker').classList.add('hidden')" class="mt-8 text-xs text-white/30 hover:text-white border-b border-transparent hover:border-white transition-colors pb-0.5">
+                我只想試用，暫不匯入 &rarr;
+            </button>
         </div>
       </div>
+
     </main>
 
     <script>
       // ==========================================
-      // ★★★ 設定區 (請確認這裡是最新的) ★★★
+      // ★★★ 設定區 ★★★
       // ==========================================
-      const BACKEND_API_URL =
-        "https://script.google.com/macros/s/AKfycbx-Dr4vdYi51FbM_I6RP8L63OZh3Nljd9FwqC5jAuqfzthvw-zxVgvZSOlqSbYv1Wa6Ew/exec";
+      const BACKEND_API_URL = "https://script.google.com/macros/s/AKfycbx-Dr4vdYi51FbM_I6RP8L63OZh3Nljd9FwqC5jAuqfzthvw-zxVgvZSOlqSbYv1Wa6Ew/exec";
 
       let stream = null;
       let facingMode = "environment";
@@ -377,26 +262,25 @@
       document.addEventListener("DOMContentLoaded", () => {
         lucide.createIcons();
         const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const isLine = ua.indexOf("Line") > -1;
-        document.getElementById("browserInfo").textContent = isLine
-          ? "LINE Mode"
-          : "Web Mode";
+        
+        // ★★★ 關鍵修改：一進來就偵測 LINE，並顯示阻擋頁 ★★★
+        if (ua.indexOf("Line") > -1) {
+            document.getElementById("lineBlocker").classList.remove("hidden");
+            document.getElementById("browserInfo").textContent = "LINE Mode (Blocked)";
+        } else {
+            document.getElementById("browserInfo").textContent = "Web Mode";
+        }
       });
 
       // --- Camera Logic ---
       async function attemptStartCamera() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
-          return showToast("error", "不支援相機");
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return showToast("error", "不支援相機");
         try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: facingMode, width: { ideal: 1920 } },
-          });
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode, width: { ideal: 1920 } } });
           onCameraSuccess(stream);
         } catch (err) {
           try {
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: facingMode },
-            });
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode } });
             onCameraSuccess(stream);
           } catch (fatalErr) {
             showToast("error", "相機啟動失敗，請改用上傳");
@@ -430,39 +314,27 @@
         await attemptStartCamera();
       }
 
-      // ★ 智慧裁切版 takePhoto (只抓中間名片區) ★
+      // ★ 智慧裁切版 takePhoto ★
       function takePhoto() {
         const video = document.getElementById("cameraFeed");
         const canvas = document.getElementById("cameraCanvas");
         const ctx = canvas.getContext("2d");
 
-        // 設定輸出寬度 800px (品質/速度平衡點)
         const outputWidth = 800;
-        const outputHeight = outputWidth / 1.6; // 1.6:1 名片比例
+        const outputHeight = outputWidth / 1.6; 
 
         canvas.width = outputWidth;
         canvas.height = outputHeight;
 
         const videoW = video.videoWidth;
         const videoH = video.videoHeight;
-
-        // 只裁切影片中間 70% 的區域
-        const cropWidth = videoW * 0.7;
-        const cropHeight = cropWidth / 1.6;
+        
+        const cropWidth = videoW * 0.7; 
+        const cropHeight = cropWidth / 1.6; 
         const startX = (videoW - cropWidth) / 2;
         const startY = (videoH - cropHeight) / 2;
 
-        ctx.drawImage(
-          video,
-          startX,
-          startY,
-          cropWidth,
-          cropHeight,
-          0,
-          0,
-          outputWidth,
-          outputHeight
-        );
+        ctx.drawImage(video, startX, startY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
 
         const finalBase64 = canvas.toDataURL("image/jpeg", 0.8);
         currentHighResBase64 = finalBase64.split(",")[1];
@@ -484,11 +356,8 @@
           const img = new Image();
           img.onload = () => {
             const c = document.createElement("canvas");
-            const maxDim = 1000; // 上傳圖片允許稍微大一點
-            const scale =
-              img.width > maxDim || img.height > maxDim
-                ? maxDim / Math.max(img.width, img.height)
-                : 1;
+            const maxDim = 1000;
+            const scale = img.width > maxDim || img.height > maxDim ? maxDim / Math.max(img.width, img.height) : 1;
             c.width = img.width * scale;
             c.height = img.height * scale;
             c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
@@ -517,18 +386,13 @@
           });
 
           const rawText = await res.text();
-          if (rawText.includes("<!DOCTYPE html>"))
-            throw new Error("後端部署錯誤：請檢查 GAS 權限");
-
+          if (rawText.includes("<!DOCTYPE html>")) throw new Error("後端部署錯誤：請檢查 GAS 權限");
+          
           let responseJson;
-          try {
-            responseJson = JSON.parse(rawText);
-          } catch (e) {
-            throw new Error("資料解析失敗");
-          }
+          try { responseJson = JSON.parse(rawText); } 
+          catch (e) { throw new Error("資料解析失敗"); }
 
-          if (responseJson.status !== "success")
-            throw new Error(responseJson.message || "辨識失敗");
+          if (responseJson.status !== "success") throw new Error(responseJson.message || "辨識失敗");
 
           const card = responseJson.data;
           document.getElementById("fieldName").value = card.name || "";
@@ -551,29 +415,12 @@
         }
       }
 
-      // --- Export Logic (混合策略版) ---
+      // --- Export Logic ---
       function generateVCardFile(name) {
-        let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${
-          document.getElementById("fieldMobile").value
-        }\nEMAIL:${
-          document.getElementById("fieldEmail").value
-        }\nORG;CHARSET=UTF-8:${
-          document.getElementById("fieldCompany").value
-        }\nTITLE;CHARSET=UTF-8:${
-          document.getElementById("fieldTitle").value
-        }\nADR;TYPE=WORK;CHARSET=UTF-8:;;${
-          document.getElementById("fieldAddress").value
-        };;;;\n`;
-        if (currentHighResBase64)
-          vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
+        let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${document.getElementById("fieldMobile").value}\nEMAIL:${document.getElementById("fieldEmail").value}\nORG;CHARSET=UTF-8:${document.getElementById("fieldCompany").value}\nTITLE;CHARSET=UTF-8:${document.getElementById("fieldTitle").value}\nADR;TYPE=WORK;CHARSET=UTF-8:;;${document.getElementById("fieldAddress").value};;;;\n`;
+        if (currentHighResBase64) vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
         vcard += `END:VCARD`;
-
-        // ★ Android 優化：只用 text/vcard
-        return new File(
-          [new Blob([vcard], { type: "text/vcard" })],
-          `${name}.vcf`,
-          { type: "text/vcard" }
-        );
+        return new File([new Blob([vcard], { type: "text/vcard" })], `${name}.vcf`, { type: "text/vcard" });
       }
 
       async function exportContact() {
@@ -583,38 +430,27 @@
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
 
-        // 1. iOS (LINE vs Safari)
+        // 如果在 LINE 模式 (雖然有擋住，但如果使用者硬闖)，還是要檢查
+        if (ua.indexOf("Line") > -1) {
+             document.getElementById("lineBlocker").classList.remove("hidden");
+             return;
+        }
+
         if (isIOS) {
-          if (ua.indexOf("Line") > -1) {
-            document
-              .getElementById("lineErrorModal")
-              .classList.remove("hidden");
-            return;
-          }
-          window.location.href = url; // Safari 完美預覽
+          window.location.href = url;
           setTimeout(() => URL.revokeObjectURL(url), 3000);
           return;
         }
 
-        // 2. Android (Share -> Link -> Download)
-        if (
-          navigator.share &&
-          navigator.canShare &&
-          navigator.canShare({ files: [file] })
-        ) {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
-            await navigator.share({
-              files: [file],
-              title: "儲存聯絡人",
-              text: `匯入名片：${name}`,
-            });
+            await navigator.share({ files: [file], title: "儲存聯絡人", text: `匯入名片：${name}` });
             showToast("success", "請選擇「聯絡人」App");
             return;
           } catch (err) {
-            if (err.name !== "AbortError") startDownload(file); // 分享失敗就下載
+            if (err.name !== "AbortError") startDownload(file);
           }
         } else {
-          // 不支援分享，嘗試直接導航，不行就下載
           window.location.href = url;
           setTimeout(() => startDownload(file), 1000);
         }
@@ -628,10 +464,7 @@
         a.download = file.name;
         document.body.appendChild(a);
         a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 100);
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
         showToast("success", "檔案已下載，請點擊「開啟」");
       }
 
@@ -645,14 +478,8 @@
         const t = document.getElementById("statusToast");
         const i = document.getElementById("statusIcon");
         const txt = document.getElementById("statusText");
-        t.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md ${
-          type === "error"
-            ? "bg-red-500/90 text-white border-red-400"
-            : "bg-green-500/90 text-white border-green-400"
-        }`;
-        i.innerHTML = `<i data-lucide="${
-          type === "error" ? "alert-circle" : "check-circle"
-        }" class="w-5 h-5"></i>`;
+        t.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md ${type === "error" ? "bg-red-500/90 text-white border-red-400" : "bg-green-500/90 text-white border-green-400"}`;
+        i.innerHTML = `<i data-lucide="${type === "error" ? "alert-circle" : "check-circle"}" class="w-5 h-5"></i>`;
         txt.innerText = msg;
         t.classList.remove("hidden");
         lucide.createIcons();
