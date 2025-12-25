@@ -575,10 +575,11 @@
 
       // --- Export Logic (保留你原本完美的邏輯) ---
       // ==========================================
-      // ★★★ 請用這整段取代原本的 generateVCardFile 函式 ★★★
+      // ==========================================
+      // ★★★ Android 最後一搏版 generateVCardFile ★★★
       // ==========================================
       function generateVCardFile(name) {
-        // 1. 建立 VCard 內容字串
+        // 1. 建立 VCard 內容字串 (內容保持不變)
         let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${
           document.getElementById("fieldMobile").value
         }\nEMAIL:${
@@ -591,16 +592,16 @@
           document.getElementById("fieldAddress").value
         };;;;\n`;
 
-        // 2. 如果有照片，加進去
         if (currentHighResBase64) {
           vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
         }
         vcard += `END:VCARD`;
 
-        // 3. 封裝成檔案物件
-        // ★ 關鍵優化：使用 'text/vcard' 並強制 charset=utf-8，這對 Android 相容性最好
+        // 2. 封裝成檔案物件
+        // ★ 修改點：去掉 ";charset=utf-8"，只留 "text/vcard"
+        // 這有助於通過某些 Android 的分享檢查
         return new File(
-          [new Blob([vcard], { type: "text/vcard;charset=utf-8" })],
+          [new Blob([vcard], { type: "text/vcard" })],
           `${name}.vcf`,
           { type: "text/vcard" }
         );
