@@ -26,6 +26,7 @@
       .gradient-bg {
         background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
       }
+      /* Camera Interface Styles */
       #cameraInterface {
         position: fixed;
         top: 0;
@@ -65,7 +66,7 @@
       .guide-box {
         position: relative;
         width: 85%;
-        aspect-ratio: 1.6/1;
+        aspect-ratio: 1.6/1; /* 名片比例 */
         border-radius: 12px;
         box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
         border: 2px solid rgba(255, 255, 255, 0.5);
@@ -107,13 +108,12 @@
         </div>
         <div>
           <h1 class="text-lg font-bold">AI 名片管家</h1>
-          <p id="browserInfo" class="text-[10px] text-green-100">v25.2</p>
+          <p id="browserInfo" class="text-[10px] text-green-100">v3.0 Final</p>
         </div>
       </div>
     </header>
 
     <main class="w-full max-w-md relative z-0 flex-1 flex flex-col w-full">
-      <!-- Toast -->
       <div
         id="statusToast"
         class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md"
@@ -121,7 +121,6 @@
         <span id="statusIcon"></span><span id="statusText"></span>
       </div>
 
-      <!-- Start Screen -->
       <div
         id="startScreen"
         class="glass-panel rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center min-h-[400px] gap-6 animate-fade-in"
@@ -133,7 +132,7 @@
         </div>
         <div class="text-center px-4 mt-2">
           <h2 class="text-xl font-bold text-slate-800">開始掃描</h2>
-          <p class="text-sm text-slate-500 mt-1">請確保光線充足</p>
+          <p class="text-sm text-slate-500 mt-1">請將名片對準框框</p>
         </div>
         <div class="w-full space-y-3 mt-4">
           <button
@@ -158,7 +157,6 @@
         />
       </div>
 
-      <!-- Camera Interface -->
       <div id="cameraInterface">
         <div
           class="absolute top-0 left-0 right-0 z-[100] p-4 flex justify-between items-center text-white bg-gradient-to-b from-black/60 to-transparent"
@@ -170,7 +168,7 @@
             <i data-lucide="x" class="w-6 h-6"></i>
           </button>
           <span class="text-sm font-medium tracking-wider shadow-sm"
-            >將名片放入框內</span
+            >請對準框框</span
           >
           <button
             onclick="switchCamera()"
@@ -196,7 +194,6 @@
         </div>
       </div>
 
-      <!-- Processing -->
       <div
         id="processingState"
         class="hidden flex-col items-center justify-center fixed inset-0 z-[100] bg-black/90 backdrop-blur-md"
@@ -209,10 +206,9 @@
             class="absolute inset-0 border-4 border-[#06C755] rounded-full border-t-transparent animate-spin"
           ></div>
         </div>
-        <p class="text-white font-bold text-lg">AI 分析中...</p>
+        <p class="text-white font-bold text-lg">AI 正在讀取名片...</p>
       </div>
 
-      <!-- Result Card -->
       <div
         id="resultCard"
         class="glass-panel rounded-2xl p-0 shadow-xl hidden transition-all duration-500 overflow-hidden flex flex-col max-h-[85vh] w-full"
@@ -246,7 +242,8 @@
             <div class="space-y-1">
               <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
                 >姓名</label
-              ><input
+              >
+              <input
                 type="text"
                 id="fieldName"
                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-bold"
@@ -255,7 +252,8 @@
             <div class="space-y-1">
               <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
                 >職稱</label
-              ><input
+              >
+              <input
                 type="text"
                 id="fieldTitle"
                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-600 text-sm"
@@ -265,7 +263,8 @@
           <div class="space-y-1">
             <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
               >公司</label
-            ><input
+            >
+            <input
               type="text"
               id="fieldCompany"
               class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
@@ -274,7 +273,8 @@
           <div class="space-y-1">
             <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
               >手機</label
-            ><input
+            >
+            <input
               type="tel"
               id="fieldMobile"
               class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
@@ -283,7 +283,8 @@
           <div class="space-y-1">
             <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
               >Email</label
-            ><input
+            >
+            <input
               type="email"
               id="fieldEmail"
               class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
@@ -292,7 +293,8 @@
           <div class="space-y-1">
             <label class="text-[10px] text-slate-400 font-bold uppercase ml-1"
               >地址</label
-            ><input
+            >
+            <input
               type="text"
               id="fieldAddress"
               class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm"
@@ -304,92 +306,70 @@
             onclick="exportContact()"
             class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"
           >
-            <i data-lucide="download" class="w-5 h-5"></i>
-            匯入手機通訊錄
+            <i data-lucide="download" class="w-5 h-5"></i>匯入手機通訊錄
           </button>
         </div>
       </div>
 
-      <!-- LINE Error Modal -->
       <div
         id="lineErrorModal"
-        class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in"
+        class="hidden fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex flex-col items-end p-6 animate-fade-in touch-none"
+        onclick="document.getElementById('lineErrorModal').classList.add('hidden')"
       >
-        <div
-          class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative"
-        >
-          <button
-            onclick="document.getElementById('lineErrorModal').classList.add('hidden')"
-            class="absolute top-4 right-4 text-slate-400"
-          >
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-          <div class="flex items-center gap-2 mb-4 text-amber-500">
-            <i data-lucide="external-link" class="w-6 h-6"></i>
-            <h3 class="text-lg font-bold text-slate-800">請開啟外部瀏覽器</h3>
-          </div>
-          <p class="text-sm text-slate-600 mb-4 font-medium">
-            iOS 的 LINE 無法直接儲存聯絡人，請依照指示操作：
+        <div class="mr-2 mt-2 flex flex-col items-end animate-bounce">
+          <i
+            data-lucide="arrow-up-right"
+            class="w-16 h-16 text-[#06C755] stroke-[3]"
+          ></i>
+        </div>
+        <div class="mt-4 mr-2 max-w-[280px] text-right">
+          <h3 class="text-2xl font-bold text-white mb-2">
+            點擊右上角
+            <span class="inline-block bg-[#06C755] text-white px-2 rounded"
+              >●●●</span
+            >
+          </h3>
+          <p class="text-white/80 text-lg font-medium leading-relaxed">
+            選擇 <span class="text-[#06C755] font-bold">開啟瀏覽器</span><br />
+            即可匯入通訊錄
           </p>
-          <div
-            class="bg-slate-100 p-4 rounded-xl space-y-3 text-sm text-slate-700"
-          >
-            <div class="flex gap-3 items-start">
+        </div>
+        <div
+          class="mt-auto w-full flex flex-col items-center justify-center text-white/50 gap-4 mb-10"
+        >
+          <div class="flex items-center gap-4">
+            <div class="flex flex-col items-center gap-2">
               <div
-                class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs"
+                class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"
               >
-                1
+                <i data-lucide="more-horizontal" class="w-6 h-6"></i>
               </div>
-              <p>
-                點擊右上角的 <span class="font-bold">「︙」</span> 或分享圖示
-              </p>
+              <span class="text-xs">1. 點選選單</span>
             </div>
-            <div class="flex gap-3 items-start">
+            <i data-lucide="arrow-right" class="w-4 h-4 opacity-50"></i>
+            <div class="flex flex-col items-center gap-2">
               <div
-                class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs"
+                class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"
               >
-                2
+                <i data-lucide="compass" class="w-6 h-6"></i>
               </div>
-              <p>
-                選擇
-                <span class="font-bold text-blue-600"
-                  >「使用預設瀏覽器開啟」</span
-                >
-                (Safari)
-              </p>
-            </div>
-            <div class="flex gap-3 items-start">
-              <div
-                class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs"
-              >
-                3
-              </div>
-              <p>
-                在 Safari 中點擊
-                <span class="font-bold">「匯入」</span>，即可自動開啟聯絡人App。
-              </p>
+              <span class="text-xs">2. 開啟瀏覽器</span>
             </div>
           </div>
-          <button
-            onclick="document.getElementById('lineErrorModal').classList.add('hidden')"
-            class="w-full mt-6 bg-[#06C755] text-white py-3 rounded-xl font-bold"
-          >
-            我了解了
-          </button>
+          <p class="text-sm border-b border-white/20 pb-0.5 mt-4">
+            輕觸螢幕關閉提示
+          </p>
         </div>
       </div>
     </main>
 
     <script>
       // ==========================================
-      // ★★★ 設定區 ★★★
+      // ★★★ 設定區 (請確認這裡是最新的) ★★★
       // ==========================================
-
-      // 請填入你剛剛部署好的 Google Apps Script 新網址
       const BACKEND_API_URL =
         "https://script.google.com/macros/s/AKfycbx-Dr4vdYi51FbM_I6RP8L63OZh3Nljd9FwqC5jAuqfzthvw-zxVgvZSOlqSbYv1Wa6Ew/exec";
 
-      // 這些全域變數保持不變
       let stream = null;
       let facingMode = "environment";
       let currentHighResBase64 = null;
@@ -399,14 +379,14 @@
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isLine = ua.indexOf("Line") > -1;
         document.getElementById("browserInfo").textContent = isLine
-          ? "Line Mode"
+          ? "LINE Mode"
           : "Web Mode";
       });
 
-      // --- Camera Logic (修正版：加入壓縮) ---
+      // --- Camera Logic ---
       async function attemptStartCamera() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
-          return showToast("error", "瀏覽器不支援相機");
+          return showToast("error", "不支援相機");
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: facingMode, width: { ideal: 1920 } },
@@ -424,7 +404,6 @@
           }
         }
       }
-
       function onCameraSuccess(stream) {
         const video = document.getElementById("cameraFeed");
         video.srcObject = stream;
@@ -434,7 +413,6 @@
           document.getElementById("cameraInterface").classList.add("active");
         };
       }
-
       function stopCamera() {
         if (stream) {
           stream.getTracks().forEach((track) => track.stop());
@@ -442,43 +420,51 @@
         }
         document.getElementById("cameraInterface").classList.remove("active");
       }
-
       function closeCamera() {
         stopCamera();
         document.getElementById("startScreen").classList.remove("hidden");
       }
-
       async function switchCamera() {
         stopCamera();
         facingMode = facingMode === "environment" ? "user" : "environment";
         await attemptStartCamera();
       }
 
-      // ★ 修改重點：拍照時強制縮小圖片 ★
+      // ★ 智慧裁切版 takePhoto (只抓中間名片區) ★
       function takePhoto() {
         const video = document.getElementById("cameraFeed");
         const canvas = document.getElementById("cameraCanvas");
-
-        // 設定最大邊長為 800px (保證後端收得到)
-        const maxDim = 800;
-        let w = video.videoWidth;
-        let h = video.videoHeight;
-
-        // 計算等比例縮放
-        if (w > maxDim || h > maxDim) {
-          const scale = maxDim / Math.max(w, h);
-          w = w * scale;
-          h = h * scale;
-        }
-
-        canvas.width = w;
-        canvas.height = h;
-
         const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, w, h);
 
-        // 轉出較小的 Base64
-        const finalBase64 = canvas.toDataURL("image/jpeg", 0.7);
+        // 設定輸出寬度 800px (品質/速度平衡點)
+        const outputWidth = 800;
+        const outputHeight = outputWidth / 1.6; // 1.6:1 名片比例
+
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
+
+        const videoW = video.videoWidth;
+        const videoH = video.videoHeight;
+
+        // 只裁切影片中間 70% 的區域
+        const cropWidth = videoW * 0.7;
+        const cropHeight = cropWidth / 1.6;
+        const startX = (videoW - cropWidth) / 2;
+        const startY = (videoH - cropHeight) / 2;
+
+        ctx.drawImage(
+          video,
+          startX,
+          startY,
+          cropWidth,
+          cropHeight,
+          0,
+          0,
+          outputWidth,
+          outputHeight
+        );
+
+        const finalBase64 = canvas.toDataURL("image/jpeg", 0.8);
         currentHighResBase64 = finalBase64.split(",")[1];
         document.getElementById("contactPhotoPreview").src = finalBase64;
 
@@ -486,22 +472,19 @@
         analyzeImage(currentHighResBase64);
       }
 
-      // --- Upload Logic (修正版：加強壓縮) ---
+      // --- Upload Logic ---
       function triggerFileInput() {
         document.getElementById("fileInput").click();
       }
-
       function handleFileSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (ev) => {
           const img = new Image();
           img.onload = () => {
             const c = document.createElement("canvas");
-            // ★ 修改重點：將原本的 1500 改為 800，確保秒傳 ★
-            const maxDim = 800;
+            const maxDim = 1000; // 上傳圖片允許稍微大一點
             const scale =
               img.width > maxDim || img.height > maxDim
                 ? maxDim / Math.max(img.width, img.height)
@@ -509,8 +492,7 @@
             c.width = img.width * scale;
             c.height = img.height * scale;
             c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-
-            const b64 = c.toDataURL("image/jpeg", 0.7);
+            const b64 = c.toDataURL("image/jpeg", 0.8);
             currentHighResBase64 = b64.split(",")[1];
             document.getElementById("contactPhotoPreview").src = b64;
             analyzeImage(currentHighResBase64);
@@ -520,32 +502,35 @@
         reader.readAsDataURL(file);
       }
 
-      // --- Analyze Logic (後端溝通) ---
+      // --- Analyze Logic ---
       async function analyzeImage(base64Data) {
         if (!base64Data) return showToast("error", "影像處理失敗");
-
         const loading = document.getElementById("processingState");
         loading.classList.remove("hidden");
         loading.classList.add("flex");
 
         try {
-          // 發送 POST 請求
           const res = await fetch(BACKEND_API_URL, {
             method: "POST",
-            // 避免 CORS 預檢請求問題，使用 text/plain
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ image: base64Data }),
           });
 
-          const json = await res.json();
+          const rawText = await res.text();
+          if (rawText.includes("<!DOCTYPE html>"))
+            throw new Error("後端部署錯誤：請檢查 GAS 權限");
 
-          if (json.status !== "success") {
-            throw new Error(json.message || "辨識失敗");
+          let responseJson;
+          try {
+            responseJson = JSON.parse(rawText);
+          } catch (e) {
+            throw new Error("資料解析失敗");
           }
 
-          const card = json.data;
+          if (responseJson.status !== "success")
+            throw new Error(responseJson.message || "辨識失敗");
 
-          // 填入介面
+          const card = responseJson.data;
           document.getElementById("fieldName").value = card.name || "";
           document.getElementById("fieldTitle").value = card.title || "";
           document.getElementById("fieldCompany").value = card.company || "";
@@ -559,27 +544,15 @@
           document.getElementById("startScreen").classList.add("hidden");
           showToast("success", "辨識成功");
         } catch (error) {
-          console.error(error);
           loading.classList.add("hidden");
           loading.classList.remove("flex");
-
-          // 如果是 HTML 錯誤，提示部署設定
-          if (error.message && error.message.includes("<")) {
-            alert("系統錯誤：後端權限設定異常，請確認 GAS 部署為 '任何人'");
-          } else {
-            alert("錯誤：" + error.message);
-          }
+          alert(`錯誤：${error.message}`);
           document.getElementById("startScreen").classList.remove("hidden");
         }
       }
 
-      // --- Export Logic (保留你原本完美的邏輯) ---
-      // ==========================================
-      // ==========================================
-      // ★★★ Android 最後一搏版 generateVCardFile ★★★
-      // ==========================================
+      // --- Export Logic (混合策略版) ---
       function generateVCardFile(name) {
-        // 1. 建立 VCard 內容字串 (內容保持不變)
         let vcard = `BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=UTF-8:${name};;;;\nFN;CHARSET=UTF-8:${name}\nTEL;TYPE=CELL:${
           document.getElementById("fieldMobile").value
         }\nEMAIL:${
@@ -591,15 +564,11 @@
         }\nADR;TYPE=WORK;CHARSET=UTF-8:;;${
           document.getElementById("fieldAddress").value
         };;;;\n`;
-
-        if (currentHighResBase64) {
+        if (currentHighResBase64)
           vcard += `PHOTO;ENCODING=b;TYPE=JPEG:${currentHighResBase64}\n`;
-        }
         vcard += `END:VCARD`;
 
-        // 2. 封裝成檔案物件
-        // ★ 修改點：去掉 ";charset=utf-8"，只留 "text/vcard"
-        // 這有助於通過某些 Android 的分享檢查
+        // ★ Android 優化：只用 text/vcard
         return new File(
           [new Blob([vcard], { type: "text/vcard" })],
           `${name}.vcf`,
@@ -607,36 +576,27 @@
         );
       }
 
-      // ==========================================
-      // ★★★ 請用這整段取代原本的 exportContact 函式 ★★★
-      // ==========================================
       async function exportContact() {
         const name = document.getElementById("fieldName").value || "Contact";
         const file = generateVCardFile(name);
         const url = URL.createObjectURL(file);
         const ua = navigator.userAgent || navigator.vendor || window.opera;
-
-        // --- 1. iOS 專用通道 (保持完美體驗) ---
         const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+        // 1. iOS (LINE vs Safari)
         if (isIOS) {
-          const isLine = ua.indexOf("Line") > -1;
-          if (isLine) {
-            // 如果是 LINE 瀏覽器，顯示教學引導
+          if (ua.indexOf("Line") > -1) {
             document
               .getElementById("lineErrorModal")
               .classList.remove("hidden");
             return;
           }
-          // iOS Safari 看到這個會自動叫出名片預覽
-          window.location.href = url;
-          setTimeout(() => URL.revokeObjectURL(url), 3000); // 釋放記憶體
+          window.location.href = url; // Safari 完美預覽
+          setTimeout(() => URL.revokeObjectURL(url), 3000);
           return;
         }
 
-        // --- 2. Android / 電腦版 混合策略 ---
-
-        // 策略 A: 優先嘗試 Web Share API (現代 Android 標準)
-        // 這會叫出系統選單，使用者選「聯絡人」就能直接存
+        // 2. Android (Share -> Link -> Download)
         if (
           navigator.share &&
           navigator.canShare &&
@@ -648,44 +608,31 @@
               title: "儲存聯絡人",
               text: `匯入名片：${name}`,
             });
-            showToast("success", "請選擇「聯絡人」App 來開啟");
+            showToast("success", "請選擇「聯絡人」App");
+            return;
           } catch (err) {
-            // 如果使用者按了取消，或是分享失敗，我們才進入策略 B
-            if (err.name !== "AbortError") {
-              console.log("Share failed, falling back to download");
-              // 降級處理：呼叫下載
-              startDownload(file);
-            }
+            if (err.name !== "AbortError") startDownload(file); // 分享失敗就下載
           }
-          return; // 如果成功呼叫分享，就結束
+        } else {
+          // 不支援分享，嘗試直接導航，不行就下載
+          window.location.href = url;
+          setTimeout(() => startDownload(file), 1000);
         }
-
-        // 策略 B: 嘗試直接導航 (針對部分舊 Android 或特定瀏覽器)
-        // 有些 Android 瀏覽器跟 iOS 一樣，讀到 vcf 會問你要不要匯入
-        window.location.href = url;
-
-        // 策略 C: 強制下載 (保底方案)
-        // 如果上面策略 B 執行後 1 秒鐘網頁還活著(沒跳轉)，代表瀏覽器看不懂
-        // 那就強制把檔案下載下來
-        setTimeout(() => {
-          startDownload(file);
-        }, 1000);
       }
-      function startDownload() {
-        const name = document.getElementById("fieldName").value || "Contact";
-        const file = generateVCardFile(name);
+
+      function startDownload(file) {
         const url = URL.createObjectURL(file);
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = `${name}.vcf`;
+        a.download = file.name;
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
         }, 100);
-        showToast("success", "已下載 vCard");
+        showToast("success", "檔案已下載，請點擊「開啟」");
       }
 
       function resetApp() {
@@ -701,17 +648,11 @@
         t.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all duration-300 flex items-center gap-3 min-w-[320px] border backdrop-blur-md ${
           type === "error"
             ? "bg-red-500/90 text-white border-red-400"
-            : type === "success"
-            ? "bg-green-500/90 text-white border-green-400"
-            : "bg-blue-500/90 text-white border-blue-400"
+            : "bg-green-500/90 text-white border-green-400"
         }`;
-
-        // 簡單的 icon 對應
-        let iconName = "info";
-        if (type === "success") iconName = "check-circle";
-        if (type === "error") iconName = "alert-circle";
-
-        i.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
+        i.innerHTML = `<i data-lucide="${
+          type === "error" ? "alert-circle" : "check-circle"
+        }" class="w-5 h-5"></i>`;
         txt.innerText = msg;
         t.classList.remove("hidden");
         lucide.createIcons();
