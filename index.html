@@ -27,68 +27,33 @@
         background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
       }
       #cameraInterface {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: #000;
-        z-index: 9000;
-        display: flex;
-        flex-direction: column;
-        visibility: hidden;
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: #000; z-index: 9000;
+        display: flex; flex-direction: column; visibility: hidden;
       }
-      #cameraInterface.active {
-        visibility: visible;
-      }
+      #cameraInterface.active { visibility: visible; }
       #cameraFeed {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 1;
+        width: 100%; height: 100%; object-fit: cover;
+        position: absolute; top: 0; left: 0; z-index: 1;
       }
-      /* 掃描框動畫 */
       .guide-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 10;
-        pointer-events: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 10; pointer-events: none;
+        display: flex; align-items: center; justify-content: center;
       }
       .guide-box {
-        position: relative;
-        width: 85%;
-        aspect-ratio: 1.6/1; 
+        position: relative; width: 85%; aspect-ratio: 1.6/1;
         border-radius: 12px;
         box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
         border: 2px solid rgba(255, 255, 255, 0.5);
       }
       .scan-laser {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: #06c755;
-        box-shadow: 0 0 15px #06c755;
+        position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: #06c755; box-shadow: 0 0 15px #06c755;
         animation: scanning 2s linear infinite;
       }
       @keyframes scanning {
-        0% { top: 0%; opacity: 0; }
-        50% { opacity: 1; }
-        100% { top: 100%; opacity: 0; }
-      }
-      /* LINE 引導遮罩專用樣式 */
-      #lineBlocker {
-        backdrop-filter: blur(8px);
+        0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; }
       }
     </style>
   </head>
@@ -101,7 +66,7 @@
         </div>
         <div>
           <h1 class="text-lg font-bold">AI 名片管家</h1>
-          <p id="browserInfo" class="text-[10px] text-green-100">v3.1 Pro</p>
+          <p id="browserInfo" class="text-[10px] text-green-100">v3.3 Stable</p>
         </div>
       </div>
     </header>
@@ -120,7 +85,16 @@
           <h2 class="text-xl font-bold text-slate-800">開始掃描</h2>
           <p class="text-sm text-slate-500 mt-1">請將名片對準框框</p>
         </div>
+
         <div class="w-full space-y-3 mt-4">
+          
+          <div id="lineWarningBtn" class="hidden w-full bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-3 mb-2 animate-pulse">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"></i>
+            <div class="text-left">
+                <h3 class="text-sm font-bold text-amber-800">建議切換瀏覽器</h3>
+                <p class="text-xs text-amber-600 mt-0.5">LINE 無法直接儲存聯絡人，請點擊選單中的 <span class="font-bold border border-amber-400 rounded px-1">開啟瀏覽器</span></p>
+            </div>
+          </div>
           <button onclick="attemptStartCamera()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2 active:scale-95 transition-transform">
             <i data-lucide="aperture" class="w-5 h-5"></i>開啟相機
           </button>
@@ -206,44 +180,20 @@
         </div>
       </div>
 
-      <div id="lineBlocker" class="hidden fixed inset-0 z-[9999] bg-slate-900/95 flex flex-col items-end p-6 animate-fade-in touch-none">
-        
-        <div class="mr-2 mt-4 flex flex-col items-end animate-bounce">
-          <i data-lucide="arrow-up-right" class="w-20 h-20 text-[#06C755] stroke-[3]"></i>
-        </div>
-
-        <div class="mt-6 mr-2 max-w-[300px] text-right">
-            <h3 class="text-3xl font-bold text-white mb-3">
-                請切換瀏覽器
-            </h3>
-            <p class="text-white/90 text-xl font-medium leading-relaxed">
-                為了能順利匯入聯絡人，<br>
-                請點擊右上角
-                <span class="inline-block bg-white/20 text-white px-2 py-0.5 rounded mx-1">●●●</span><br>
-                選擇 <span class="text-[#06C755] font-bold text-2xl">開啟瀏覽器</span>
-            </p>
-        </div>
-
-        <div class="mt-auto w-full flex flex-col items-center justify-center text-white/50 gap-6 mb-12">
-            <div class="flex items-center gap-6 justify-center w-full">
-                 <div class="flex flex-col items-center gap-2">
-                    <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
-                        <i data-lucide="more-horizontal" class="w-8 h-8 text-white"></i>
-                    </div>
-                    <span class="text-sm">1. 點擊選單</span>
-                 </div>
-                 <i data-lucide="arrow-right" class="w-6 h-6 opacity-40"></i>
-                 <div class="flex flex-col items-center gap-2">
-                    <div class="w-14 h-14 rounded-2xl bg-[#06C755]/20 flex items-center justify-center border border-[#06C755]/50 shadow-[0_0_15px_rgba(6,199,85,0.3)]">
-                        <i data-lucide="compass" class="w-8 h-8 text-[#06C755]"></i>
-                    </div>
-                    <span class="text-sm text-[#06C755]">2. 開啟瀏覽器</span>
-                 </div>
-            </div>
-            
-            <button onclick="document.getElementById('lineBlocker').classList.add('hidden')" class="mt-8 text-xs text-white/30 hover:text-white border-b border-transparent hover:border-white transition-colors pb-0.5">
-                我只想試用，暫不匯入 &rarr;
-            </button>
+      <div id="lineErrorModal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in" onclick="document.getElementById('lineErrorModal').classList.add('hidden')">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
+          <div class="flex items-center gap-2 mb-4 text-amber-500">
+            <i data-lucide="alert-circle" class="w-6 h-6"></i>
+            <h3 class="text-lg font-bold text-slate-800">無法直接匯入</h3>
+          </div>
+          <p class="text-sm text-slate-600 mb-4 font-medium leading-relaxed">
+            iOS/LINE 的限制導致無法直接存檔。<br>
+            請點擊選單中的 <span class="font-bold bg-slate-100 px-1 rounded">●●●</span><br>
+            並選擇 <span class="text-[#06C755] font-bold">開啟瀏覽器</span> 即可解決。
+          </p>
+          <button class="w-full mt-2 bg-[#06C755] text-white py-3 rounded-xl font-bold">
+            我知道了
+          </button>
         </div>
       </div>
 
@@ -262,11 +212,12 @@
       document.addEventListener("DOMContentLoaded", () => {
         lucide.createIcons();
         const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isLine = ua.indexOf("Line") > -1;
         
-        // ★★★ 關鍵修改：一進來就偵測 LINE，並顯示阻擋頁 ★★★
-        if (ua.indexOf("Line") > -1) {
-            document.getElementById("lineBlocker").classList.remove("hidden");
-            document.getElementById("browserInfo").textContent = "LINE Mode (Blocked)";
+        // ★★★ 簡單直接：如果是 LINE，就顯示黃色警告按鈕 ★★★
+        if (isLine) {
+            document.getElementById("lineWarningBtn").classList.remove("hidden");
+            document.getElementById("browserInfo").textContent = "LINE Mode";
         } else {
             document.getElementById("browserInfo").textContent = "Web Mode";
         }
@@ -314,32 +265,24 @@
         await attemptStartCamera();
       }
 
-      // ★ 智慧裁切版 takePhoto ★
       function takePhoto() {
         const video = document.getElementById("cameraFeed");
         const canvas = document.getElementById("cameraCanvas");
         const ctx = canvas.getContext("2d");
-
         const outputWidth = 800;
         const outputHeight = outputWidth / 1.6; 
-
         canvas.width = outputWidth;
         canvas.height = outputHeight;
-
         const videoW = video.videoWidth;
         const videoH = video.videoHeight;
-        
         const cropWidth = videoW * 0.7; 
         const cropHeight = cropWidth / 1.6; 
         const startX = (videoW - cropWidth) / 2;
         const startY = (videoH - cropHeight) / 2;
-
         ctx.drawImage(video, startX, startY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
-
         const finalBase64 = canvas.toDataURL("image/jpeg", 0.8);
         currentHighResBase64 = finalBase64.split(",")[1];
         document.getElementById("contactPhotoPreview").src = finalBase64;
-
         closeCamera();
         analyzeImage(currentHighResBase64);
       }
@@ -384,16 +327,12 @@
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ image: base64Data }),
           });
-
           const rawText = await res.text();
           if (rawText.includes("<!DOCTYPE html>")) throw new Error("後端部署錯誤：請檢查 GAS 權限");
-          
           let responseJson;
           try { responseJson = JSON.parse(rawText); } 
           catch (e) { throw new Error("資料解析失敗"); }
-
           if (responseJson.status !== "success") throw new Error(responseJson.message || "辨識失敗");
-
           const card = responseJson.data;
           document.getElementById("fieldName").value = card.name || "";
           document.getElementById("fieldTitle").value = card.title || "";
@@ -401,7 +340,6 @@
           document.getElementById("fieldMobile").value = card.mobile || "";
           document.getElementById("fieldEmail").value = card.email || "";
           document.getElementById("fieldAddress").value = card.address || "";
-
           loading.classList.add("hidden");
           loading.classList.remove("flex");
           document.getElementById("resultCard").classList.remove("hidden");
@@ -430,9 +368,9 @@
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
 
-        // 如果在 LINE 模式 (雖然有擋住，但如果使用者硬闖)，還是要檢查
-        if (ua.indexOf("Line") > -1) {
-             document.getElementById("lineBlocker").classList.remove("hidden");
+        // iOS LINE 專用阻擋 (防止按了沒反應)
+        if (isIOS && ua.indexOf("Line") > -1) {
+             document.getElementById("lineErrorModal").classList.remove("hidden");
              return;
         }
 
